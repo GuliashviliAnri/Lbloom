@@ -1,0 +1,1 @@
+"use client";export default function Error({reset}:{reset:()=>void}){return <main className="container section"><h1>მონაცემები დროებით მიუწვდომელია</h1><p>სცადეთ ხელახლა ან დაგვიკავშირდით: 574 240 286.</p><button className="button" onClick={reset}>ხელახლა ცდა</button></main>}

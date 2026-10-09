@@ -1,0 +1,1 @@
+import {catalog} from '@/lib/catalog';import {Shell,LocationSection} from '@/components/site';export const dynamic='force-dynamic';export default async function Page(){const d=await catalog('settings');return <Shell settings={d.settings}><LocationSection settings={d.settings}/></Shell>}

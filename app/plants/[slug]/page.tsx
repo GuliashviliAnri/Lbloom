@@ -1,0 +1,2 @@
+import {notFound} from 'next/navigation';import {catalog} from '@/lib/catalog';import {ProductDetail} from '@/components/site';export const dynamic='force-dynamic';
+export default async function Page({params}:{params:Promise<{slug:string}>}){const {slug}=await params;const d=await catalog('plants',slug);const item=d.products.find(p=>p.slug===slug);if(!item)notFound();return <ProductDetail item={item} settings={d.settings} furniture={false}/>}
