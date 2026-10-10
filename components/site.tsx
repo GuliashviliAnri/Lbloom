@@ -1,4 +1,7 @@
 "use client";
+import VideoPlayer from './video-player';
+import AdvertisementBanner from './advertisement-banner';
+import {defaultAdvertisement,type Advertisement} from '@/lib/advertisement';
 import ResponsiveImage from './responsive-image';
 import DirectionIcon from './direction-icon';
 import {WhatsAppIcon,MessengerIcon} from './contact-icons';
@@ -6,9 +9,10 @@ import StoryDate from './story-date';
 import {latestVideo} from '@/lib/video-order';
 import ProductGallery from './product-gallery';
 import Price from './price';
+import {hasDiscount} from '@/lib/pricing';
 import SocialLinks from './social-links';
 import {heightInCentimeters} from '@/lib/measurements';
-import {usePathname} from 'next/navigation';import {useState,useRef,useEffect,useId} from 'react';import {Menu,X,Phone,Clock,Play,MapPin} from 'lucide-react';import type {Item,Service,Video,Settings,GardenStory} from '@/lib/types';
+import {usePathname} from 'next/navigation';import {useState,useRef,useEffect,useId} from 'react';import {Menu,X,Phone,Clock,Play,MapPin,Flame} from 'lucide-react';import type {Item,Service,Video,Settings,GardenStory} from '@/lib/types';
 const nav=[['მთავარი','/'],['საბაღე ამბები','/garden-stories'],['მცენარეები','/plants'],['ეზოს ავეჯი','/furniture'],['სერვისები','/services'],['კონტაქტი','/contact']];
 export function Button({href,children,secondary=false}:{href:string;children:React.ReactNode;secondary?:boolean}){return <a className={'button '+(secondary?'secondary':'')} href={href}>{children}</a>}
 export function Header({settings:s}:{settings:Settings}){const[open,setOpen]=useState(false);const pathname=usePathname();return <header><div className="container header"><a href="/" className="brand"><img src="/logo-mark.webp" alt="LBLOOM ლოგო"/><span><b>LBLOOM</b><small>საბაღე ცენტრი</small></span></a><nav aria-label="მთავარი ნავიგაცია">{nav.map(([n,h])=><a href={h} key={h} aria-current={pathname===h||(h!=='/'&&pathname.startsWith(h+'/'))?'page':undefined}>{n}</a>)}</nav><div className="header-contact"><a href={'tel:'+s.phone.replaceAll(' ','')}><Phone size={16}/>{s.phone}</a><small><Clock size={13}/>{s.working_hours}</small></div><button className="menu-button" onClick={()=>setOpen(!open)} aria-label={open?'მენიუს დახურვა':'მენიუს გახსნა'} aria-expanded={open}>{open?<X/>:<Menu/>}</button></div>{open&&<nav className="mobile-nav" aria-label="მობილური ნავიგაცია">{nav.map(([n,h])=><a href={h} onClick={()=>setOpen(false)} key={h}>{n}</a>)}<a href={'tel:'+s.phone}>{s.phone} · {s.working_hours}</a></nav>}</header>}
@@ -16,13 +20,15 @@ export function Footer({settings:s}:{settings:Settings}){return <footer><div cla
 export function FloatingContactButtons({settings:s}:{settings:Settings}){return <div className="floating">{s.whatsapp_url&&<a href={s.whatsapp_url} target="_blank" rel="noreferrer" className="whatsapp-contact" aria-label="WhatsApp" title="WhatsApp"><WhatsAppIcon/></a>}{s.messenger_url&&<a href={s.messenger_url} target="_blank" rel="noreferrer" className="messenger-contact" aria-label="Messenger" title="Messenger"><MessengerIcon/></a>}</div>}
 export function Shell({settings,children}:{settings:Settings;children:React.ReactNode}){return <div className="site-shell"><Header settings={settings}/><main id="main">{children}</main><Footer settings={settings}/><FloatingContactButtons settings={settings}/></div>}
 export function SectionHeader({title,link,label}:{title:string;link?:string;label?:string}){return <div className="section-heading"><h2>{title}</h2><span className="section-rule" aria-hidden="true"/>{link&&<a href={link}>{label??'ყველას ნახვა'}</a>}</div>}
-export function ProductCard({item,furniture=false}:{item:Item;furniture?:boolean}){return <a className={'product-card '+(furniture?'furniture-card':'plant-card')} href={(furniture?'/furniture/':'/plants/')+item.slug}><div className="product-image"><ResponsiveImage src={item.image_url} alt={item.name} loading="lazy"/></div><div className="product-body"><h3>{item.name}</h3>{furniture?<p>{item.dimensions_or_set_details}</p>:<><p className="product-description">{item.description.split(/(?<=[.!?])\s+/)[0]}</p><p className="product-height"><span>სიმაღლე:</span> {heightInCentimeters(item.height??'')}</p></>}<div className="product-bottom"><Price price={item.price} salePrice={item.sale_price}/><span className="view">ნახვა <DirectionIcon/></span></div></div></a>}
+export function ProductCard({item,furniture=false}:{item:Item;furniture?:boolean}){return <a className={'product-card '+(furniture?'furniture-card':'plant-card')} href={(furniture?'/furniture/':'/plants/')+item.slug}><div className="product-image"><ResponsiveImage src={item.image_url} alt={item.name} loading="lazy"/>{hasDiscount(item.price,item.sale_price)&&<span className="discount-badge"><span className="discount-badge-label"><Flame size={16} fill="currentColor" aria-hidden="true"/>ფასდაკლება</span>{Math.floor((item.price!-item.sale_price!)/item.price!*100)>=1&&<strong className="discount-badge-percent">−{Math.floor((item.price!-item.sale_price!)/item.price!*100)}%</strong>}</span>}</div><div className="product-body"><h3>{item.name}</h3>{furniture?<p>{item.dimensions_or_set_details}</p>:<><p className="product-description">{item.description.split(/(?<=[.!?])\s+/)[0]}</p><p className="product-height"><span>სიმაღლე:</span> {heightInCentimeters(item.height??'')}</p></>}<div className="product-bottom"><Price price={item.price} salePrice={item.sale_price}/><span className="view">ნახვა <DirectionIcon/></span></div></div></a>}
 export function FurnitureCard({item}:{item:Item}){return <ProductCard item={item} furniture/>}
 export function ServiceCard({service:s}:{service:Service}){return <a href={'/services/'+s.slug} className="service-card"><ResponsiveImage src={s.image_url} alt={s.title} loading="lazy"/><div><h3>{s.title}</h3><p>{s.description}</p><span className="service-view">ნახვა <DirectionIcon/></span></div></a>}
 export function GardenStoryCard({story:s}:{story:GardenStory}){return <a href={'/garden-stories/'+s.slug} className="story-card"><ResponsiveImage src={s.image_url} alt={s.title} loading="lazy"/><div><span className="story-label">საბაღე რჩევები</span><StoryDate value={s.created_at}/><h3>{s.title}</h3><p>{s.excerpt}</p><span className="text-link">წაიკითხე</span></div></a>}
 export function VideoCard({video,onClick,isNew=false}:{video:Video;onClick:()=>void;isNew?:boolean}){return <button className="video-card" onClick={onClick}><div><ResponsiveImage src={video.thumbnail_url} alt={video.title} loading="lazy"/>{isNew&&<span className="new-badge">სიახლე</span>}<span className="play"><Play fill="currentColor" size={20}/></span></div><div className="video-caption"><h3>{video.title}</h3><span className="video-duration">{video.duration}</span></div></button>}
-export function Videos({videos,featured=false}:{videos:Video[];featured?:boolean}) {
+export function Videos({videos,featured=false,advertisement=defaultAdvertisement}:{videos:Video[];featured?:boolean;advertisement?:Advertisement|null}) {
  const [active,setActive]=useState<Video|null>(null);
+ const [page,setPage]=useState(0);
+ const gridId=useId();
  const dialog=useRef<HTMLDialogElement>(null);
  const trigger=useRef<HTMLElement|null>(null);
  const titleId=useId();
@@ -35,13 +41,22 @@ export function Videos({videos,featured=false}:{videos:Video[];featured?:boolean
  function open(video:Video){trigger.current=document.activeElement as HTMLElement;setActive(video)}
  const first=latestVideo(videos);
  const ordered=first?[first,...videos.filter(v=>v.id!==first.id)]:videos;
- const visible=featured?ordered.slice(0,4):ordered;
+ const pages=Math.ceil(ordered.length/4);
+ const current=Math.min(page,Math.max(0,pages-1));
+ const paged=featured&&pages>1;
+ const visible=featured?ordered.slice(current*4,(current+1)*4):ordered;
  return <>
-  {visible.length>0&&<div className={"videos"+(featured?" video-overview":"")} data-count={Math.min(visible.length,4)}>{visible.map(v=><VideoCard key={v.id} video={v} isNew={v.id===first?.id} onClick={()=>open(v)}/>)}</div>}
+  <div className={featured?"video-and-ad":undefined} data-count={Math.min(visible.length,4)}>
+  {visible.length>0&&<div className={paged?"product-pager-frame has-pages video-pager":""} role={featured?'region':undefined} aria-label={featured?'ვიდეოები':undefined}>
+   {paged&&<button type="button" className="product-page-arrow" aria-label="ვიდეოები — წინა გვერდი" aria-controls={gridId} disabled={current===0} onClick={()=>setPage(current-1)}><DirectionIcon direction="left" size={23}/></button>}
+   <div id={gridId} key={current} className={"videos"+(featured?" video-overview product-page-enter":"")+(paged?" video-paged-grid":"")} data-count={Math.min(visible.length,4)}>{visible.map(v=><VideoCard key={v.id} video={v} isNew={v.id===first?.id} onClick={()=>open(v)}/>)}</div>
+   {paged&&<button type="button" className="product-page-arrow" aria-label="ვიდეოები — შემდეგი გვერდი" aria-controls={gridId} disabled={current===pages-1} onClick={()=>setPage(current+1)}><DirectionIcon size={23}/></button>}
+  </div>}
   {videos.length===0&&<div className="empty">ვიდეოები მალე დაემატება.</div>}
-  {featured&&<aside className="advertisement-slot" aria-label="სარეკლამო სივრცე">რეკლამის ადგილი</aside>}
+  {featured&&<AdvertisementBanner advertisement={advertisement}/>}
+  </div>
   <dialog className="video-dialog" ref={dialog} aria-labelledby={titleId} onCancel={e=>{e.preventDefault();close()}} onClick={e=>{if(e.target===dialog.current)close()}}>
-   {active&&<><div className="video-dialog-header"><h3 id={titleId}>{active.title}</h3><button className="dialog-close" aria-label="ვიდეოს დახურვა" onClick={close}><X/></button></div><div className="video-player"><video key={active.id} src={active.video_url} poster={active.thumbnail_url} controls autoPlay playsInline/></div></>}
+   {active&&<><div className="video-dialog-header"><div className="video-dialog-heading"><span className="video-dialog-brand">LBLOOM · ვიდეო</span><h3 id={titleId}>{active.title}</h3></div><button type="button" className="dialog-close" aria-label="ვიდეოს დახურვა" onClick={close}><X size={20}/></button></div><VideoPlayer key={active.id} video={active}/></>}
   </dialog>
  </>;
 }

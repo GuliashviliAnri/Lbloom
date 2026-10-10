@@ -2,7 +2,7 @@
 -- გაუშვით მთლიანად Supabase > SQL Editor-ში. ხელახლა გაშვება დასაშვებია.
 -- პროდუქტები, ფასები, ფოტოები, ამბები და არსებული ადმინის წვდომა შენარჩუნდება.
 -- გასუფთავება ეხება მხოლოდ ქვემოთ დასახელებულ მოძველებულ შეზღუდვებსა და ინდექსებს.
--- რვავე მოქმედი ცხრილი საჭიროა. ცხრილები და Storage ფაილები არ იშლება.
+-- ყველა მოქმედი ცხრილი საჭიროა. ცხრილები და Storage ფაილები არ იშლება.
 begin;
 create table if not exists public.admins(user_id uuid primary key references auth.users(id) on delete cascade,created_at timestamptz not null default now());
 create schema if not exists private;
@@ -214,10 +214,76 @@ create policy "admin video delete" on storage.objects for delete to authenticate
 -- select id from auth.users where lower(email)=lower('თქვენი-ელფოსტა')
 -- on conflict(user_id) do nothing;
 notify pgrst, 'reload schema';
+create table if not exists public.advertisements (
+ id smallint primary key default 1 check (id=1),
+ title text not null default 'რეკლამის ადგილი',
+ image_url text not null default '',
+ link_url text not null default '',
+ is_active boolean not null default true
+);
+alter table public.advertisements enable row level security;
+drop policy if exists "public read advertisement" on public.advertisements;
+create policy "public read advertisement" on public.advertisements for select to anon,authenticated using (true);
+drop policy if exists "admin insert advertisement" on public.advertisements;
+create policy "admin insert advertisement" on public.advertisements for insert to authenticated with check ((select private.is_admin()));
+drop policy if exists "admin update advertisement" on public.advertisements;
+create policy "admin update advertisement" on public.advertisements for update to authenticated using ((select private.is_admin())) with check ((select private.is_admin()));
+grant select on public.advertisements to anon,authenticated;
+grant insert,update on public.advertisements to authenticated;
+revoke insert,update,delete on public.advertisements from anon;
+insert into public.advertisements(id) values(1) on conflict(id) do nothing;
 commit;
 
 -- ბოლოს გამოაქვს არსებული public ცხრილები. უცნობი ცხრილები ავტომატურად არ იშლება.
 select tablename as table_name,
- case when tablename in ('admins','categories','products','furniture','services','videos','site_settings','garden_stories')
+ case when tablename in ('admins','categories','products','furniture','services','videos','site_settings','garden_stories','advertisements')
  then 'გამოიყენება LBLOOM-ში' else 'ცალკე შესამოწმებელია' end as status
 from pg_tables where schemaname='public' order by tablename;
+
+-- Content is displayed newest first automatically.
+alter table public.services add column if not exists created_at timestamptz not null default now();
+
+-- Video view totals and anonymous browser deduplication.
+-- Public read-only totals. Browser identifiers stay in the private schema.
+create table if not exists public.video_view_counts (
+ video_id uuid primary key references public.videos(id) on delete cascade,
+ view_count bigint not null default 0 check (view_count >= 0)
+);
+alter table public.video_view_counts enable row level security;
+revoke all on public.video_view_counts from anon, authenticated;
+grant select on public.video_view_counts to anon, authenticated;
+drop policy if exists "Public video view totals" on public.video_view_counts;
+create policy "Public video view totals" on public.video_view_counts for select to anon, authenticated using (true);
+create table if not exists private.video_view_visitors (
+ video_id uuid not null references public.videos(id) on delete cascade,
+ visitor_id uuid not null,
+ primary key (video_id, visitor_id)
+);
+alter table private.video_view_visitors enable row level security;
+revoke all on private.video_view_visitors from public, anon, authenticated;
+-- Intentional anonymous analytics endpoint: only an existing video and a unique
+-- browser token may add one view. No client can set a total or read visitor tokens.
+create or replace function private.record_video_view(p_video_id uuid, p_visitor_id uuid)
+returns bigint language plpgsql security definer set search_path = '' as $$
+declare added integer; total bigint;
+begin
+ if p_video_id is null or p_visitor_id is null or not exists(select 1 from public.videos where id=p_video_id) then return null; end if;
+ insert into private.video_view_visitors(video_id,visitor_id) values(p_video_id,p_visitor_id) on conflict do nothing;
+ get diagnostics added = row_count;
+ if added=1 then
+  insert into public.video_view_counts as counts(video_id,view_count) values(p_video_id,1)
+  on conflict(video_id) do update set view_count=counts.view_count+1 returning view_count into total;
+ else
+  select view_count into total from public.video_view_counts where video_id=p_video_id;
+ end if;
+ return coalesce(total,0);
+end; $$;
+revoke all on function private.record_video_view(uuid,uuid) from public;
+grant execute on function private.record_video_view(uuid,uuid) to anon, authenticated;
+create or replace function public.record_video_view(p_video_id uuid, p_visitor_id uuid)
+returns bigint language sql security invoker set search_path = '' as $$
+ select private.record_video_view(p_video_id,p_visitor_id);
+$$;
+revoke all on function public.record_video_view(uuid,uuid) from public;
+grant execute on function public.record_video_view(uuid,uuid) to anon, authenticated;
+notify pgrst, 'reload schema';

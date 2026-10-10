@@ -14,7 +14,8 @@ export default function GardenStories({stories,overview=false}:{stories:GardenSt
  const [hovered,setHovered]=useState(false);
  const [focused,setFocused]=useState(false);
  const touch=useRef<{x:number;y:number}|null>(null);
- const count=stories.length;
+ const slides=stories.slice(0,4);
+ const count=slides.length;
  const active=count?index%count:0;
  useEffect(()=>{
   if(count<2||paused||hovered||focused)return;
@@ -23,7 +24,7 @@ export default function GardenStories({stories,overview=false}:{stories:GardenSt
  },[count,paused,hovered,focused,index]);
  function move(step:number){setIndex(i=>(i+step+count)%count)}
  if(!count)return <div className="empty">საბაღე ამბები მალე დაემატება.</div>;
- const sideStories=stories.slice(1,3);
+ const sideStories=stories.slice(0,2);
  return <><div className="story-grid">
   <div className="story-carousel" role="region" aria-roledescription="კარუსელი" aria-label="საბაღე ამბები"
    onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)}
@@ -33,8 +34,8 @@ export default function GardenStories({stories,overview=false}:{stories:GardenSt
    onTouchCancel={()=>{touch.current=null}}
    onTouchEnd={e=>{const start=touch.current;touch.current=null;if(!start||count<2)return;const point=e.changedTouches[0];const dx=point.clientX-start.x,dy=point.clientY-start.y;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy))move(dx<0?1:-1)}}>
    <div className="story-slides" aria-live={paused?'polite':'off'}>
-    {stories.filter((_,i)=>i===active||i===(active+1)%count).map(story=><a key={story.id} href={'/garden-stories/'+story.slug} className="story-card story-featured" hidden={story.id!==stories[active].id} aria-label={story.title}>
-     <ResponsiveImage src={story.image_url} alt={story.title} sizes="(max-width:767px) 100vw, 50vw" loading="eager" fetchPriority={story.id===stories[active].id?'high':'low'}/>
+    {slides.filter((_,i)=>i===active||i===(active+1)%count).map(story=><a key={story.id} href={'/garden-stories/'+story.slug} className="story-card story-featured" hidden={story.id!==slides[active].id} aria-label={story.title}>
+     <ResponsiveImage src={story.image_url} alt={story.title} sizes="(max-width:767px) 100vw, 50vw" loading="eager" fetchPriority={story.id===slides[active].id?'high':'low'}/>
      <div className="story-caption"><div className="story-caption-copy"><StoryDate value={story.created_at}/><h3>{story.title}</h3><p>{story.excerpt}</p></div><span className="text-link">წაიკითხე</span></div>
     </a>)}
    </div>
@@ -44,5 +45,5 @@ export default function GardenStories({stories,overview=false}:{stories:GardenSt
    </>}
   </div>
   {sideStories.map(story=><GardenStoryCard key={story.id} story={story}/>)}
- </div>{!overview&&stories.length>3&&<div className="story-grid story-more-grid">{stories.slice(3).map(story=><GardenStoryCard key={story.id} story={story}/>)}</div>}</>;
+ </div>{!overview&&stories.length>2&&<div className="story-grid story-more-grid">{stories.slice(2).map(story=><GardenStoryCard key={story.id} story={story}/>)}</div>}</>;
 }

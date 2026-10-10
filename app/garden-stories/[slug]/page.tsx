@@ -11,8 +11,8 @@ export default async function Page({params}:{params:Promise<{slug:string}>}){
  return <Shell settings={d.settings}><article className="container story-detail">
   <nav className="breadcrumbs" aria-label="გვერდის მდებარეობა"><a href="/">მთავარი</a><span>/</span><a href="/garden-stories">საბაღე ამბები</a></nav>
   <div className="story-detail-layout">
-   <header className="story-detail-heading"><span className="story-label">საბაღე ამბები</span><StoryDate value={story.created_at}/><h1>{story.title}</h1>{story.excerpt&&<p className="story-intro">{story.excerpt}</p>}</header>
    <figure className="story-detail-photo"><ResponsiveImage src={story.image_url} alt={story.title} sizes="(max-width:767px) 100vw, 50vw" fetchPriority="high"/></figure>
+   <header className="story-detail-heading"><span className="story-label">საბაღე ამბები</span><StoryDate value={story.created_at}/><h1>{story.title}</h1>{story.excerpt&&<p className="story-intro">{story.excerpt}</p>}</header>
    <div className="story-body">{story.body.split(/\n\s*\n/).filter(Boolean).map((text:string,i:number)=><p key={i}>{text}</p>)}<a className="story-back-link" href="/garden-stories"><DirectionIcon direction="left" size={17}/>ყველა საბაღე ამბავი</a></div>
   </div>
  </article></Shell>;
