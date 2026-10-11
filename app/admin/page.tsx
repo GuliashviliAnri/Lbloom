@@ -1,5 +1,8 @@
 "use client";
 /* eslint-disable @next/next/no-html-link-for-pages -- Native links preserve navigation in the Sites runtime. */
+import FacebookVideo from '@/components/facebook-video';
+import {facebookVideoUrl,validVideoUrl} from '@/lib/video-source';
+import {openingVideoFrame} from '@/lib/video-cover';
 import {formatVideoDuration} from '@/lib/video-duration';
 import {automaticSlug} from '@/lib/automatic-slug';
 import AdminAdvertisement from '@/components/admin-advertisement';
@@ -14,7 +17,7 @@ import DirectionIcon from '@/components/direction-icon';
 import {useEffect,useState,useCallback} from 'react';import {Sprout,Armchair,FolderTree,Shovel,Video,Newspaper,Settings,Search,Plus,Pencil,Trash2,LogOut,ExternalLink,LoaderCircle,X,Megaphone,Play} from 'lucide-react';import {supabase} from '@/lib/supabase';import {furnitureCategories,furnitureCategory} from '@/lib/furniture-categories';
 type Table='products'|'furniture'|'services'|'videos'|'garden_stories'|'site_settings'|'advertisements';type Row=Record<string,string|number|boolean|string[]|null>;
 const tabs:Record<Table,string>={products:'მცენარეები',furniture:'ეზოს ავეჯი',services:'სერვისები',videos:'ვიდეოები',garden_stories:'საბაღე ამბები',site_settings:'საიტის ინფორმაცია',advertisements:'რეკლამა'};
-const labels:Record<string,string>={excerpt:'მოკლე შესავალი',body:'ამბის სრული ტექსტი',is_published:'გამოქვეყნებულია',name:'სახელი',title:'სათაური',price:'ჩვეულებრივი ფასი (₾)',sale_price:'ფასდაკლებული ფასი (₾)',height:'სიმაღლე',description:'აღწერა',dimensions_or_set_details:'კომპლექტაცია / ზომები',image_url:'მთავარი ფოტო',gallery_images:'დამატებითი ფოტოები',category_id:'კატეგორია',category_slug:'ეზოს ავეჯის კატეგორია',is_in_stock:'მარაგშია',video_url:'ვიდეოს ბმული (MP4)',thumbnail_url:'ვიდეოს გარეკანი',phone:'ტელეფონი',address:'მისამართი',google_maps_url:'Google Maps-ის პირდაპირი ბმული',google_maps_embed_url:'Google Maps embed ბმული',working_hours:'სამუშაო საათები',facebook_url:'Facebook ბმული',instagram_url:'Instagram ბმული',whatsapp_url:'WhatsApp ბმული',messenger_url:'Messenger ბმული'};
+const labels:Record<string,string>={excerpt:'მოკლე შესავალი',body:'ამბის სრული ტექსტი',is_published:'გამოქვეყნებულია',name:'სახელი',title:'სათაური',price:'ჩვეულებრივი ფასი (₾)',sale_price:'ფასდაკლებული ფასი (₾)',height:'სიმაღლე',description:'აღწერა',dimensions_or_set_details:'კომპლექტაცია / ზომები',image_url:'მთავარი ფოტო',gallery_images:'დამატებითი ფოტოები',category_id:'კატეგორია',category_slug:'ეზოს ავეჯის კატეგორია',is_in_stock:'მარაგშია',video_url:'ვიდეოს ბმული',thumbnail_url:'ვიდეოს გარეკანი',phone:'ტელეფონი',address:'მისამართი',google_maps_url:'Google Maps-ის პირდაპირი ბმული',google_maps_embed_url:'Google Maps embed ბმული',working_hours:'სამუშაო საათები',facebook_url:'Facebook ბმული',instagram_url:'Instagram ბმული',whatsapp_url:'WhatsApp ბმული',messenger_url:'Messenger ბმული'};
 const fields:Record<Table,string[]>={products:['name','category_id','price','sale_price','height','description','image_url','gallery_images','is_in_stock'],furniture:['name','category_slug','price','sale_price','description','dimensions_or_set_details','image_url','gallery_images','is_in_stock'],services:['title','description','image_url'],videos:['title','video_url','thumbnail_url','duration'],garden_stories:['title','excerpt','body','image_url','is_published'],site_settings:['phone','address','google_maps_url','google_maps_embed_url','working_hours','facebook_url','instagram_url','whatsapp_url','messenger_url'],advertisements:[]};
 const icons={products:Sprout,furniture:Armchair,services:Shovel,videos:Video,garden_stories:Newspaper,site_settings:Settings,advertisements:Megaphone};
 function fresh(t:Table):Row{return Object.fromEntries(fields[t].map(f=>[f,f.startsWith('is_')?false:f==='gallery_images'?[]:f==='sort_order'?0:'']))}
@@ -58,6 +61,19 @@ async function upload(files:FileList|null,field:string){
   setUploading(false);
  }
 }
+async function uploadOpeningCover(file:File){
+ if(!supabase)throw new Error('No storage');
+ const frame=await openingVideoFrame(file);const name=crypto.randomUUID()+'.jpg';
+ const {error}=await supabase.storage.from('video-thumbnails').upload(name,frame.cover,{contentType:'image/jpeg',upsert:false});
+ if(error)throw error;
+ return {url:supabase.storage.from('video-thumbnails').getPublicUrl(name).data.publicUrl,duration:frame.duration};
+}
+async function coverFromVideo(files:FileList|null){
+ const file=files?.[0];if(!file)return;setUploading(true);setMessage('');
+ try{const frame=await uploadOpeningCover(file);setDraft(d=>({...d,thumbnail_url:frame.url,duration:frame.duration}));setMessage('ვიდეოს საწყისი კადრი გარეკანად დაემატა.');}
+ catch{setMessage('კადრი ვერ მივიღეთ. სცადეთ MP4 ვიდეო ან დაამატეთ გარეკანი ფოტოდ.');}
+ finally{setUploading(false);}
+}
 async function uploadVideo(files:FileList|null){
  const file=files?.[0];if(!file||!supabase)return;
  const type=file.type||(/\.mp4$/i.test(file.name)?'video/mp4':/\.webm$/i.test(file.name)?'video/webm':'');
@@ -70,18 +86,14 @@ async function uploadVideo(files:FileList|null){
   if(error){setMessage(/bucket.*not found/i.test(error.message)?'ვიდეოების საცავი ჯერ არ არის შექმნილი. გაუშვით ვიდეოების SQL ფაილი Supabase-ის SQL Editor-ში.':'ვიდეო ვერ აიტვირთა. გადაამოწმეთ ინტერნეტი და ვიდეოების საცავის უფლებები.');return}
   const url=supabase.storage.from('videos').getPublicUrl(name).data.publicUrl;
   setDraft(d=>({...d,video_url:url,duration:''}));
-  const duration=await new Promise<string>(resolve=>{
-   const video=document.createElement('video');const localUrl=URL.createObjectURL(file);
-   const finish=(value:string)=>{clearTimeout(timer);video.onloadedmetadata=null;video.onerror=null;video.removeAttribute('src');video.load();URL.revokeObjectURL(localUrl);resolve(value)};
-   const timer=setTimeout(()=>finish(''),5000);
-   video.onloadedmetadata=()=>{finish(formatVideoDuration(video.duration))};
-   video.onerror=()=>finish('');video.preload='metadata';video.src=localUrl;
-  });
-  if(duration)setDraft(d=>({...d,duration}));
-  setMessage('ვიდეო ატვირთულია. დაამატეთ სათაური და გარეკანი, შემდეგ შეინახეთ ჩანაწერი.');
+  try {
+   const frame=await uploadOpeningCover(file);
+   setDraft(d=>({...d,thumbnail_url:frame.url,duration:frame.duration}));
+   setMessage('ვიდეო და მისი საწყისი კადრი ატვირთულია. დაამატეთ სათაური და შეინახეთ.');
+  }catch{setMessage('ვიდეო ატვირთულია, მაგრამ საწყისი კადრი ვერ მივიღეთ. შეგიძლიათ გარეკანი ფოტოდ დაამატოთ.');}
  }catch{setMessage('ვიდეოს ატვირთვა შეწყდა. სცადეთ ხელახლა.')}finally{setUploading(false)}
 }
-async function save(e:React.FormEvent){e.preventDefault();if(!supabase||uploading)return;setBusy(true);setMessage('');const payload:Row={};for(const f of fields[table])payload[f]=draft[f]??(f==='category_slug'?furnitureCategory({name:String(draft.name??'')}):'');if(['products','furniture','services','garden_stories'].includes(table)){payload.slug=draft.slug||automaticSlug(String(payload.name??payload.title??''));if(!draft.slug)setDraft(d=>({...d,slug:payload.slug}))}if((table==='products'&&String(payload.category_id).startsWith('preset:'))||(table==='furniture'&&cats.some(c=>c.slug===payload.category_slug&&String(c.id).startsWith('preset:')))){const chosen=cats.find(c=>table==='products'?c.id===payload.category_id:c.slug===payload.category_slug);if(chosen){const{data:resolved,error}=await supabase.from('categories').upsert({name:chosen.name,slug:chosen.slug,kind:table==='furniture'?'furniture':'plant',group_slug:chosen.group_slug,sort_order:chosen.sort_order},{onConflict:'slug',ignoreDuplicates:true}).select('id').maybeSingle();let id=resolved?.id;if(!id&&!error){const existing=await supabase.from('categories').select('id').eq('slug',chosen.slug).single();id=existing.data?.id}if(error||!id){setMessage('კატეგორიის შენახვისთვის ჯერ გაუშვით ბაზის სრული SQL სკრიპტი.');setBusy(false);return}if(table==='products')payload.category_id=id}}if(table==='products')payload.height=heightInCentimeters(String(payload.height??''));for(const f of ['price','sale_price'])if(f in payload)payload[f]=payload[f]===''?null:Number(payload[f]);if(table==='products'||table==='furniture'){
+async function save(e:React.FormEvent){e.preventDefault();if(!supabase||uploading)return;if(table==='videos'&&!validVideoUrl(String(draft.video_url??''))){setMessage('ჩასვით Facebook Reel-ის საჯარო ბმული ან პირდაპირი MP4 / WebM ვიდეოს HTTPS ბმული.');return;}setBusy(true);setMessage('');const payload:Row={};for(const f of fields[table])payload[f]=draft[f]??(f==='category_slug'?furnitureCategory({name:String(draft.name??'')}):'');if(['products','furniture','services','garden_stories'].includes(table)){payload.slug=draft.slug||automaticSlug(String(payload.name??payload.title??''));if(!draft.slug)setDraft(d=>({...d,slug:payload.slug}))}if((table==='products'&&String(payload.category_id).startsWith('preset:'))||(table==='furniture'&&cats.some(c=>c.slug===payload.category_slug&&String(c.id).startsWith('preset:')))){const chosen=cats.find(c=>table==='products'?c.id===payload.category_id:c.slug===payload.category_slug);if(chosen){const{data:resolved,error}=await supabase.from('categories').upsert({name:chosen.name,slug:chosen.slug,kind:table==='furniture'?'furniture':'plant',group_slug:chosen.group_slug,sort_order:chosen.sort_order},{onConflict:'slug',ignoreDuplicates:true}).select('id').maybeSingle();let id=resolved?.id;if(!id&&!error){const existing=await supabase.from('categories').select('id').eq('slug',chosen.slug).single();id=existing.data?.id}if(error||!id){setMessage('კატეგორიის შენახვისთვის ჯერ გაუშვით ბაზის სრული SQL სკრიპტი.');setBusy(false);return}if(table==='products')payload.category_id=id}}if(table==='products')payload.height=heightInCentimeters(String(payload.height??''));for(const f of ['price','sale_price'])if(f in payload)payload[f]=payload[f]===''?null:Number(payload[f]);if(table==='products'||table==='furniture'){
  if(payload.sale_price!==null&&(payload.price===null||!Number.isFinite(Number(payload.sale_price))||Number(payload.sale_price)<0||Number(payload.sale_price)>=Number(payload.price))){setMessage('ფასდაკლებული ფასი ჩვეულებრივ ფასზე ნაკლები უნდა იყოს. ფასდაკლების გასაუქმებლად დატოვეთ ველი ცარიელი.');setBusy(false);return}
  if(payload.sale_price===null&&!rows.some(r=>Object.prototype.hasOwnProperty.call(r,'sale_price')))delete payload.sale_price;
 }const result=table==='site_settings'?await supabase.from(table).upsert({...payload,id:1}):draft.id?await supabase.from(table).update(payload).eq('id',draft.id):await supabase.from(table).insert(payload);if(result.error){setMessage(result.error.code==='PGRST204'&&'sale_price' in payload?'ფასდაკლების შესანახად გაუშვით ფასდაკლებების SQL ფაილი Supabase-ის SQL Editor-ში.':result.error.code==='23505'?'ჩანაწერი ამ სახელით უკვე არსებობს. სცადეთ ხელახლა.':'შენახვა ვერ მოხერხდა. გადაამოწმეთ ველები და კავშირი.');setBusy(false);return}await load(table);if(table!=='site_settings'){setEditing(false);setDraft(fresh(table))}setMessage('ცვლილებები შენახულია.');setBusy(false)}
@@ -120,12 +132,12 @@ return <div className="admin admin-workspace">
       <label>ვიდეოს ფაილი<input className="admin-file-input" type="file" accept="video/mp4,video/webm,.mp4,.webm" disabled={uploading} onChange={e=>{void uploadVideo(e.target.files);e.target.value=''}}/></label>
       <p className="admin-field-hint">MP4 ან WebM · მაქსიმუმ 50 MB</p>
      </div>
-     <label>ან ჩასვით ვიდეოს ბმული<input type="text" required value={String(draft.video_url??'')} placeholder="https://…" onChange={e=>setDraft(d=>({...d,video_url:e.target.value,duration:''}))}/></label>
+     <label>ან ჩასვით Facebook Reel-ის / ვიდეოს ბმული<input type="text" required value={String(draft.video_url??'')} placeholder="https://www.facebook.com/reel/… ან https://…/video.mp4" onChange={e=>setDraft(d=>({...d,video_url:e.target.value,duration:'',thumbnail_url:''}))}/></label>
     </fieldset>
     <fieldset disabled={busy||uploading} className="admin-video-visuals"><legend>წინასწარი ნახვა და გარეკანი</legend>
-     <div className="admin-video-stage">{draft.video_url?<video key={String(draft.video_url)} onLoadedMetadata={event=>{const duration=formatVideoDuration(event.currentTarget.duration);const url=String(draft.video_url);if(duration)setDraft(current=>current.video_url===url?{...current,duration}:current);}} src={String(draft.video_url)} poster={String(draft.thumbnail_url??'')} controls playsInline preload="metadata"/>:<div className="admin-video-placeholder"><Play size={30}/><strong>ვიდეო აქ გამოჩნდება</strong><p>ატვირთეთ ფაილი ან ჩასვით ბმული</p></div>}</div>
-     <div className="admin-video-cover">{renderField('thumbnail_url')}</div>
-     <p className="admin-field-hint">გარეკანი ვიდეოს ქარდზე გამოჩნდება · JPG, PNG ან WebP · მაქსიმუმ 8 MB</p>
+     <div className="admin-video-stage">{draft.video_url?(facebookVideoUrl(String(draft.video_url))?<FacebookVideo url={String(draft.video_url)} title={String(draft.title||'ვიდეოს წინასწარი ნახვა')}/>:<video key={String(draft.video_url)} onLoadedMetadata={event=>{const duration=formatVideoDuration(event.currentTarget.duration);const url=String(draft.video_url);if(duration)setDraft(current=>current.video_url===url?{...current,duration}:current);}} src={String(draft.video_url)} poster={String(draft.thumbnail_url??'')} controls playsInline preload="metadata"/>):<div className="admin-video-placeholder"><Play size={30}/><strong>ვიდეო აქ გამოჩნდება</strong><p>ატვირთეთ ფაილი ან ჩასვით ბმული</p></div>}</div>
+     <div className="admin-video-cover"><label>გარეკანი ვიდეოს დასაწყისიდან<input className="admin-file-input" type="file" accept="video/mp4,video/webm,.mp4,.webm" onChange={e=>{void coverFromVideo(e.target.files);e.target.value=''}}/></label><p className="admin-field-hint">აირჩიეთ ორიგინალი ვიდეო — მხოლოდ საწყისი კადრის ფოტო აიტვირთება. ვიდეოს ზომა აქ შეზღუდული არ არის.</p>{renderField('thumbnail_url')}</div>
+     <p className="admin-field-hint">ატვირთულ ვიდეოს საწყისი კადრი ავტომატურად ემატება. სურვილის შემთხვევაში შეცვალეთ ფოტოთი · JPG, PNG ან WebP · მაქსიმუმ 8 MB</p>
     </fieldset>
    </div>:(table==='products'||table==='furniture')?<div className="admin-product-layout">
     <div className="admin-product-information">

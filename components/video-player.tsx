@@ -1,5 +1,7 @@
 "use client";
 import {useEffect,useRef,useState} from 'react';
+import FacebookVideo from './facebook-video';
+import {facebookVideoUrl} from '@/lib/video-source';
 import {Eye,Clock} from 'lucide-react';
 import {supabase} from '@/lib/supabase';
 import type {Video} from '@/lib/types';
@@ -12,6 +14,7 @@ function visitorId(){
  }catch{return temporaryVisitor??(temporaryVisitor=crypto.randomUUID())}
 }
 export default function VideoPlayer({video}:{video:Video}){
+ const facebook=Boolean(facebookVideoUrl(video.video_url));
  const [count,setCount]=useState<number|null>(null);
  const [failed,setFailed]=useState(false);
  const recorded=useRef(false);
@@ -38,8 +41,9 @@ export default function VideoPlayer({video}:{video:Video}){
   }catch{/* Counting failures must not interrupt playback. */}
   finally{pending.current=false}
  }
+ useEffect(()=>{if(facebook)void record();},[video.id,facebook]);
  return <>
-  <div className="video-player"><video src={video.video_url} poster={video.thumbnail_url} controls autoPlay playsInline onPlaying={()=>void record()}/></div>
-  <div className="video-player-meta"><div className="video-view-count" role="status" aria-live="polite"><Eye size={17} aria-hidden="true"/>{count!==null?<span><strong>{count.toLocaleString('en-US')}</strong> ნახვა</span>:<span>{failed?'ნახვები დროებით მიუწვდომელია':'ნახვები იტვირთება…'}</span>}</div>{video.duration&&<span className="video-player-duration"><Clock size={15} aria-hidden="true"/>{video.duration}</span>}</div>
+  <div className={"video-player"+(facebook?" facebook-player":"")}>{facebook?<FacebookVideo url={video.video_url} title={video.title}/>:<video src={video.video_url} poster={video.thumbnail_url} controls autoPlay playsInline onPlaying={()=>void record()}/>}</div>
+  <div className="video-player-meta"><div className="video-view-count" role="status" aria-live="polite"><Eye size={17} aria-hidden="true"/>{count!==null?<span><strong>{count.toLocaleString('en-US')}</strong> {facebook?'გახსნა':'ნახვა'}</span>:<span>{failed?'ნახვები დროებით მიუწვდომელია':'ნახვები იტვირთება…'}</span>}</div>{video.duration&&<span className="video-player-duration"><Clock size={15} aria-hidden="true"/>{video.duration}</span>}</div>
  </>;
 }
