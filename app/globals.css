@@ -784,3 +784,11 @@ select, .admin-form select, .mobile-category select {
 .video-player-duration {display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:12px;white-space:nowrap;}
 @media(max-width:767px) {.video-dialog {width:calc(100vw - 20px);max-height:calc(100dvh - 20px);padding:0;border-radius:11px;} .video-dialog-header {padding:14px 15px;gap:12px;} .video-dialog-header h3 {font-size:15px;} .video-dialog-brand {font-size:9px;} .video-dialog .video-player {margin:8px 8px 0;border-radius:6px;} .video-dialog .video-player video {max-height:calc(100dvh - 175px);} .video-player-meta {padding:12px 15px 14px;gap:10px;}}
 @media(max-height:500px) {.video-dialog-header {padding:8px 14px;} .video-dialog-brand {display:none;} .video-dialog .video-player video {max-height:calc(100dvh - 135px);} .video-player-meta {padding:8px 14px;}}
+
+.story-share {display:flex;align-items:center;justify-content:space-between;gap:18px;clear:both;margin-top:24px;padding:18px 0 0;border-top:1px solid var(--line);}
+.story-share > span {font-size:14px;color:var(--muted);}
+.story-facebook-share {display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:44px;padding:10px 16px;border-radius:6px;background:#1877f2;color:#fff;font-size:13px;font-weight:600;transition:background .2s;}
+.story-facebook-share svg {width:19px;height:19px;flex-shrink:0;}
+.story-facebook-share:hover {background:#1261cb;}
+.story-facebook-share:focus-visible {outline:2px solid #1877f2;outline-offset:4px;}
+@media(max-width:767px) {.story-share {flex-direction:column;align-items:flex-start;gap:12px;margin-top:20px;padding-top:16px;} .story-facebook-share {width:100%;}}
