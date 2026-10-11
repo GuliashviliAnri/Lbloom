@@ -857,3 +857,36 @@ select, .admin-form select, .mobile-category select {
  .stories-page .story-grid > .story-card .text-link {font-size:12px;line-height:1.5;margin-top:6px;}
  .stories-page .story-grid > .story-card .story-date {font-size:10px;margin-bottom:5px;}
 }
+
+/* A quieter card outline lets the photos carry the visual emphasis. */
+.product-card,.service-card,.story-card,.video-card {
+ border-color:#c7d0bd;
+ box-shadow:0 2px 8px #26392c05;
+}
+.product-card:hover,.catalog-products .product-card:hover,
+.service-card:hover,.story-card:hover,.video-card:hover {border-color:#a7b89b;}
+/* The stories now begin the homepage directly beneath the header. */
+.garden-stories-section {padding-top:24px;}
+@media(max-width:767px) {.garden-stories-section {padding-top:20px;}}
+
+/* Contact channels form two balanced rows on phones. */
+@media(max-width:767px) {
+ .location-copy .social-links,.location-copy .location-messaging {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+ .location-copy .social-links {margin:16px 0 0;}
+ .location-copy .location-messaging {margin-top:10px;}
+ .location-copy .social-links > a,.location-copy .social-link-pending,
+ .location-copy .location-messaging > a {min-width:0;width:100%;min-height:44px;padding:8px 5px;justify-content:center;gap:6px;font-size:12px;white-space:nowrap;}
+ .location-copy .social-links svg,.location-copy .location-messaging svg {width:18px;height:18px;flex-shrink:0;}
+}
+
+/* Compact admin information forms: full-width identity, paired prices. */
+.admin-product-layout .admin-fields {gap:12px;align-items:start;}
+.admin-product-information {gap:14px;}
+.admin-product-layout fieldset {padding:16px;}
+.admin-product-layout label {gap:6px;}
+.admin-product-layout input[type=number] {max-width:none;}
+.admin-product-layout textarea {min-height:110px;}
+.admin-dimensions {gap:0;}
+.admin-dimension-fields {gap:10px;}
+.admin-video-info {grid-template-columns:minmax(0,1fr);}
+.admin-video-info label:last-child {max-width:none;}

@@ -1,3 +1,5 @@
+import StructuredData from '@/components/structured-data';
+import {articleData,breadcrumbData} from '@/lib/seo';
 /* eslint-disable @next/next/no-html-link-for-pages -- Native links preserve navigation in the Sites runtime. */
 import {cache} from 'react';
 import StoryShare from '@/components/story-share';
@@ -13,7 +15,7 @@ const loadStory=cache(async(slug:string)=>{const d=await catalog('stories',slug)
 export async function generateMetadata({params}:{params:Promise<{slug:string}>}){const {slug}=await params;const {story}=await loadStory(slug);return storySharingMetadata(story)}
 export default async function Page({params}:{params:Promise<{slug:string}>}){
  const {slug}=await params;const {d,story}=await loadStory(slug);
- return <Shell settings={d.settings}><article className="container story-detail">
+ return <Shell settings={d.settings}>{d.connected&&<StructuredData data={[articleData(story),breadcrumbData([{name:'მთავარი',path:'/'},{name:'საბაღე ამბები',path:'/garden-stories'},{name:story.title,path:'/garden-stories/'+encodeURIComponent(story.slug)}])]}/>}<article className="container story-detail">
   <nav className="breadcrumbs" aria-label="გვერდის მდებარეობა"><a href="/">მთავარი</a><span>/</span><a href="/garden-stories">საბაღე ამბები</a></nav>
   <div className="story-detail-layout">
    <figure className="story-detail-photo"><ResponsiveImage src={story.image_url} alt={story.title} sizes="(max-width:767px) 100vw, 50vw" fetchPriority="high"/></figure>

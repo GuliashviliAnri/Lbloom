@@ -7,5 +7,5 @@ export function HeightInput({value,onChange}:{value:string;onChange:(value:strin
 }
 export function FurnitureMeasurements({value,onChange}:{value:string;onChange:(value:string)=>void}) {
  const dimensions=parseDimensions(value);
- return <div className="admin-dimensions"><div className="admin-dimension-fields">{Object.entries(dimensionLabels).map(([key,label])=><label key={key}>{label}<div className="admin-unit-input"><input type="number" min="0" step="0.1" placeholder="0" value={dimensions[key as keyof typeof dimensionLabels]} onChange={e=>onChange(formatDimensions({...dimensions,[key]:e.target.value}))}/><span>სმ</span></div></label>)}</div><label>კომპლექტაცია / დამატებითი მახასიათებლები<input value={dimensions.details} onChange={e=>onChange(formatDimensions({...dimensions,details:e.target.value}))} placeholder="მაგალითად: 2 სკამი და მაგიდა"/></label></div>;
+ return <div className="admin-dimensions"><div className="admin-dimension-fields">{Object.entries(dimensionLabels).map(([key,label])=><label key={key}>{label}<div className="admin-unit-input"><input type="number" min="0" step="0.1" placeholder="0" value={dimensions[key as keyof typeof dimensionLabels]} onChange={e=>onChange(formatDimensions({...dimensions,[key]:e.target.value}))}/><span>სმ</span></div></label>)}</div></div>;
 }
