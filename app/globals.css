@@ -914,3 +914,11 @@ select, .admin-form select, .mobile-category select {
 @media(max-width:767px) {.video-player-meta {flex-wrap:wrap;} .video-facebook-button {font-size:11px;padding:9px 11px;} .video-player-actions {gap:8px;} .video-dialog .facebook-player .facebook-video {width:min(100%,calc((100dvh - 220px) * var(--video-ratio)));}}
 
 .video-facebook-button svg {width:18px;height:18px;flex-shrink:0;}
+
+.admin-reorder-handle {display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:36px;height:44px;padding:0;border:1px solid transparent;border-radius:7px;color:#72836a;background:transparent;cursor:grab;touch-action:none;user-select:none;}
+.admin-reorder-handle:hover,.admin-reorder-handle:focus-visible {background:#e6ecdf;border-color:#c4d0ba;}
+.admin-reorder-handle.is-dragging {cursor:grabbing;background:#d6e4cc;color:#2d5631;}
+.admin-row:has(.is-dragging) {background:#eaf2e3;box-shadow:inset 3px 0 #598447;}
+.admin-order-hint {font-size:12px;line-height:1.6;color:var(--muted);margin:0;padding:0 20px 14px;}
+.admin-reorder-handle:disabled {opacity:.35;cursor:default;}
+@media(max-width:767px){.admin-row-content {width:100%;gap:9px;}.admin-order-hint {padding:0 14px 12px;}.admin-reorder-handle {width:28px;}}

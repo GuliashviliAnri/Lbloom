@@ -23,14 +23,14 @@ test('four or fewer products need no page controls',()=>{
  const Pager=compile('../components/home-products.tsx',{react:{useId:()=> 'cards',useState:()=>[0,()=>{}]},'./site':{ProductCard:()=>null},'./direction-icon':{default:()=>null},'./use-page-swipe':{default:()=>({})},'./use-card-page-size':{default:()=>4}}).default;
  assert.equal(children(Pager({items:[{id:'1'}],furniture:true})).filter(n=>n?.type==='button').length,0);
 });
-test('catalog includes unfeatured products beyond six and queries every content section newest first',async()=>{
+test('catalog includes every product and applies manual order before newest-first ties',async()=>{
  const calls=[];const data={products:Array.from({length:9},(_,i)=>({id:String(i),is_featured:false})),furniture:[],services:[],videos:[],garden_stories:[],site_settings:{id:1},advertisements:null};
  const db={from(table){const query={then(resolve){return Promise.resolve({data:data[table],error:null}).then(resolve)}};for(const method of ['select','order','eq','limit','returns','single','maybeSingle'])query[method]=(...args)=>{calls.push([table,method,...args]);return query};return query}};
  const api=compile('../lib/catalog.ts',{'@supabase/supabase-js':{createClient:()=>db},'./supabase-config':{supabaseUrl:'https://example.com',supabasePublishableKey:'public'},'./data':{settings:{}},'./advertisement':{advertisementFromResult:()=>null}});
  const result=await api.catalog('home');assert.equal(result.products.length,9);
  assert.equal(calls.some(c=>c[0]==='products'&&c[1]==='eq'&&c[2]==='is_featured'),false);
  assert.equal(calls.some(c=>c[0]==='products'&&c[1]==='limit'),false);
- for(const table of ['products','furniture','services','videos','garden_stories'])assert.ok(calls.some(c=>c[0]===table&&c[1]==='order'&&c[2]==='created_at'&&c[3].ascending===false));
+ for(const table of ['products','furniture','services','videos','garden_stories']){const order=calls.filter(c=>c[0]===table&&c[1]==='order');assert.equal(order[0][2],'sort_order');assert.equal(order[0][3].ascending,true);assert.equal(order[1][2],'created_at');assert.equal(order[1][3].ascending,false);}
  assert.ok(calls.some(c=>c[0]==='garden_stories'&&c[1]==='limit'&&c[2]===4));
 });
 test('home stories have two latest side cards and only four carousel slides',()=>{

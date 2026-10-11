@@ -1,10 +1,5 @@
 import {facebookVideoUrl} from './video-source';
-// Keep the current catalog's resolved covers durable when Facebook rejects server requests.
-const savedCovers:Record<string,string>={
- 'https://www.facebook.com/reel/4373452432966926':'/facebook-covers/4373452432966926.jpg',
- 'https://www.facebook.com/reel/2236295913608359':'/facebook-covers/2236295913608359.jpg',
-};
-export function automaticVideoCover(url:string):string {const facebook=facebookVideoUrl(url);return facebook?(savedCovers[facebook]||'/api/video-cover?url='+encodeURIComponent(facebook)):'';}
+export function automaticVideoCover(url:string):string {const facebook=facebookVideoUrl(url);return facebook?'/api/video-cover?url='+encodeURIComponent(facebook):'';}
 export function facebookCoverFromHtml(html:string):string|null {
  const decode=(value:string)=>value.replace(/&amp;/gi,'&').replace(/&quot;/gi,'"').replace(/&#(?:x([\da-f]+)|(\d+));/gi,(_,hex,decimal)=>String.fromCodePoint(parseInt(hex||decimal,hex?16:10)));
  for(const tag of html.match(/<meta\b[^>]*>/gi)||[]){

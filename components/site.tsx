@@ -46,7 +46,7 @@ export function Videos({videos,featured=false,advertisement=defaultAdvertisement
  function close(){dialog.current?.close();setActive(null);trigger.current?.focus()}
  function open(video:Video){trigger.current=document.activeElement as HTMLElement;setActive(video)}
  const first=latestVideo(videos);
- const ordered=first?[first,...videos.filter(v=>v.id!==first.id)]:videos;
+ const ordered=videos;
  const pageSize=responsiveSize||Math.max(ordered.length,1);
  const pages=Math.ceil(ordered.length/pageSize);
  const current=Math.min(Math.floor(page/pageSize),Math.max(0,pages-1));
