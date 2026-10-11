@@ -691,7 +691,7 @@ select, .admin-form select, .mobile-category select {
 .admin-ad-preview .advertisement-slot > a {pointer-events:none;}
 @media (max-width:767px) {.advertisement-slot.advertisement-artwork {height:80px;min-height:80px;}}
 
-/* Home catalog pages show four products; later products render on demand. */
+/* One row per page: one mobile, two tablet, four desktop cards. */
 .product-pager-frame.has-pages {display:grid;grid-template-columns:40px minmax(0,1fr) 40px;gap:12px;align-items:center;}
 .product-pager-frame .product-grid {min-width:0;align-self:stretch;}
 .product-page-arrow {display:grid;place-items:center;width:40px;height:44px;border:1px solid var(--line-strong);border-radius:50%;background:var(--surface);color:var(--green);cursor:pointer;}
@@ -699,9 +699,9 @@ select, .admin-form select, .mobile-category select {
 .product-page-arrow:disabled {opacity:.3;cursor:default;}
 .product-page-arrow:focus-visible {outline:2px solid var(--green);outline-offset:3px;}
 @media(max-width:767px) {
- .product-pager-frame.has-pages {grid-template-columns:28px minmax(0,1fr) 28px;gap:6px;}
- .product-page-arrow {width:28px;height:38px;}
- .home-product-pager .product-grid {grid-auto-flow:row;grid-auto-columns:auto;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible;padding-bottom:0;gap:12px;}
+ .product-pager-frame.has-pages {grid-template-columns:32px minmax(0,1fr) 32px;gap:6px;}
+ .product-page-arrow {width:32px;height:44px;}
+ .home-product-pager .product-grid {grid-auto-flow:row;grid-auto-columns:auto;grid-template-columns:minmax(0,1fr);overflow:visible;padding-bottom:0;gap:12px;}
  .home-product-pager .product-body {padding:12px 9px;}
  .home-product-pager .product-bottom {flex-wrap:wrap;gap:8px;}
 }
@@ -792,3 +792,68 @@ select, .admin-form select, .mobile-category select {
 .story-facebook-share:hover {background:#1261cb;}
 .story-facebook-share:focus-visible {outline:2px solid #1877f2;outline-offset:4px;}
 @media(max-width:767px) {.story-share {flex-direction:column;align-items:flex-start;gap:12px;margin-top:20px;padding-top:16px;} .story-facebook-share {width:100%;}}
+
+.related-products {margin-top:44px;padding-top:28px;border-top:1px solid var(--line);}
+.home-product-pager,.product-pager-frame,.detail-grid > * {min-width:0;}
+.home-product-pager .product-grid,.video-overview {overflow:hidden;}
+@media(max-width:767px) {
+ .video-pager .video-paged-grid {grid-template-columns:minmax(0,1fr);}
+ .related-products {margin-top:28px;padding-top:20px;}
+ .detail-copy {padding:18px;}
+ .detail-copy h1,.breadcrumbs {overflow-wrap:anywhere;}
+ .contact-actions {flex-wrap:wrap;}
+ .home-product-pager .product-image {height:auto;aspect-ratio:1.15;}
+ .home-product-pager .product-body {padding:14px 12px;}
+ .home-product-pager .product-bottom {flex-wrap:wrap;}
+}
+/* Wide displays gain room without stretching text or cards across the screen. */
+@media(min-width:1920px) {
+ .container {width:min(1680px,calc(100% - 96px));}
+ .section {padding-block:32px;}
+ .product-grid {gap:24px;}
+ .product-image,.plant-card .product-image {height:260px;}
+ .product-body {padding:18px;}
+ .detail {max-width:1440px;}
+ .story-detail {max-width:1440px;}
+ .detail-grid {gap:44px;}
+}
+
+/* Mobile catalog pages keep four cards and switch with a horizontal swipe. */
+.home-product-pager .product-grid,.video-paged-grid {touch-action:pan-y pinch-zoom;}
+@media(max-width:767px) {
+ .home-product-pager .product-pager-frame.has-pages,
+ .video-pager.product-pager-frame.has-pages {display:block;}
+ .home-product-pager .product-page-arrow,.video-pager .product-page-arrow {display:none;}
+ .home-product-pager .product-grid,
+ .video-pager .video-paged-grid {grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+ .home-product-pager .product-body {padding:12px 9px;}
+ .story-home-overview > .story-card {display:none;}
+ .story-home-overview {grid-template-columns:minmax(0,1fr);}
+ .story-home-overview .story-carousel {width:100%;min-width:0;}
+}
+
+/* Restore the original readable mobile cards and native touch scrolling. */
+@media(max-width:767px) {
+ .home-product-pager .product-grid {grid-auto-flow:column;grid-auto-columns:min(72vw,260px);grid-template-columns:none;gap:16px;overflow-x:auto;overflow-y:hidden;padding-bottom:10px;scroll-snap-type:x mandatory;touch-action:pan-x pan-y pinch-zoom;}
+ .home-product-pager .product-card {scroll-snap-align:start;}
+ .home-product-pager .product-image {height:190px;aspect-ratio:auto;}
+ .home-product-pager .plant-card .product-image {height:215px;}
+ .home-product-pager .product-body {padding:12px 12px 7px;}
+ .home-product-pager .product-bottom {display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;}
+ .video-pager .video-paged-grid {width:100%;grid-auto-flow:column;grid-auto-columns:min(76vw,270px);grid-template-columns:none;gap:14px;overflow-x:auto;overflow-y:hidden;padding:5px 0 14px;scroll-snap-type:x mandatory;touch-action:pan-x pan-y pinch-zoom;}
+ .video-pager .video-card > div:first-child {height:302px;flex-basis:302px;}
+ .video-pager .video-caption {padding:7px 10px;}
+ .video-pager .video-caption h3 {font-size:14px;}
+ .video-pager .new-badge {top:12px;left:12px;padding:5px 12px;font-size:12px;min-height:30px;}
+}
+
+/* Story listing cards stay compact even with tall photos and long excerpts. */
+@media(max-width:767px) {
+ .stories-page .story-grid > .story-card {position:relative;grid-template-columns:38% minmax(0,1fr);gap:12px;height:190px;min-height:0;align-items:stretch;}
+ .stories-page .story-grid > .story-card > img {position:absolute;inset:0 auto 0 0;display:block;width:38%;height:100%;min-height:0;object-fit:cover;}
+ .stories-page .story-grid > .story-card > div {grid-column:2;min-width:0;min-height:0;padding:10px 10px 10px 0;overflow:hidden;}
+ .stories-page .story-grid > .story-card h3 {font-size:14px;line-height:1.5;margin-bottom:6px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;overflow-wrap:anywhere;}
+ .stories-page .story-grid > .story-card p {font-size:12px;line-height:1.5;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;}
+ .stories-page .story-grid > .story-card .text-link {font-size:12px;line-height:1.5;margin-top:6px;}
+ .stories-page .story-grid > .story-card .story-date {font-size:10px;margin-bottom:5px;}
+}

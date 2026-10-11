@@ -25,7 +25,7 @@ export default function GardenStories({stories,overview=false}:{stories:GardenSt
  function move(step:number){setIndex(i=>(i+step+count)%count)}
  if(!count)return <div className="empty">საბაღე ამბები მალე დაემატება.</div>;
  const sideStories=stories.slice(0,2);
- return <><div className="story-grid">
+ return <><div className={"story-grid"+(overview?" story-home-overview":"")}>
   <div className="story-carousel" role="region" aria-roledescription="კარუსელი" aria-label="საბაღე ამბები"
    onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)}
    onFocusCapture={()=>setFocused(true)} onBlurCapture={e=>{if(!e.currentTarget.contains(e.relatedTarget))setFocused(false)}}

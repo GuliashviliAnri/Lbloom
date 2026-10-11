@@ -1,5 +1,8 @@
 "use client";
 import VideoPlayer from './video-player';
+import HomeProducts from './home-products';
+import usePageSwipe from './use-page-swipe';
+import useCardPageSize from './use-card-page-size';
 import AdvertisementBanner from './advertisement-banner';
 import {defaultAdvertisement,type Advertisement} from '@/lib/advertisement';
 import ResponsiveImage from './responsive-image';
@@ -29,6 +32,7 @@ export function Videos({videos,featured=false,advertisement=defaultAdvertisement
  const [active,setActive]=useState<Video|null>(null);
  const [page,setPage]=useState(0);
  const gridId=useId();
+ const responsiveSize=useCardPageSize();
  const dialog=useRef<HTMLDialogElement>(null);
  const trigger=useRef<HTMLElement|null>(null);
  const titleId=useId();
@@ -41,16 +45,18 @@ export function Videos({videos,featured=false,advertisement=defaultAdvertisement
  function open(video:Video){trigger.current=document.activeElement as HTMLElement;setActive(video)}
  const first=latestVideo(videos);
  const ordered=first?[first,...videos.filter(v=>v.id!==first.id)]:videos;
- const pages=Math.ceil(ordered.length/4);
- const current=Math.min(page,Math.max(0,pages-1));
+ const pageSize=responsiveSize||Math.max(ordered.length,1);
+ const pages=Math.ceil(ordered.length/pageSize);
+ const current=Math.min(Math.floor(page/pageSize),Math.max(0,pages-1));
  const paged=featured&&pages>1;
- const visible=featured?ordered.slice(current*4,(current+1)*4):ordered;
+ const visible=featured?ordered.slice(current*pageSize,(current+1)*pageSize):ordered;
+ const swipe=usePageSwipe(step=>{if(featured)setPage(Math.max(0,Math.min(pages-1,current+step))*pageSize);});
  return <>
   <div className={featured?"video-and-ad":undefined} data-count={Math.min(visible.length,4)}>
-  {visible.length>0&&<div className={paged?"product-pager-frame has-pages video-pager":""} role={featured?'region':undefined} aria-label={featured?'ვიდეოები':undefined}>
-   {paged&&<button type="button" className="product-page-arrow" aria-label="ვიდეოები — წინა გვერდი" aria-controls={gridId} disabled={current===0} onClick={()=>setPage(current-1)}><DirectionIcon direction="left" size={23}/></button>}
-   <div id={gridId} key={current} className={"videos"+(featured?" video-overview product-page-enter":"")+(paged?" video-paged-grid":"")} data-count={Math.min(visible.length,4)}>{visible.map(v=><VideoCard key={v.id} video={v} isNew={v.id===first?.id} onClick={()=>open(v)}/>)}</div>
-   {paged&&<button type="button" className="product-page-arrow" aria-label="ვიდეოები — შემდეგი გვერდი" aria-controls={gridId} disabled={current===pages-1} onClick={()=>setPage(current+1)}><DirectionIcon size={23}/></button>}
+  {visible.length>0&&<div className={featured?"product-pager-frame video-pager"+(paged?" has-pages":""):""} role={featured?'region':undefined} aria-label={featured?'ვიდეოები':undefined}>
+   {paged&&<button type="button" className="product-page-arrow" aria-label="ვიდეოები — წინა გვერდი" aria-controls={gridId} disabled={current===0} onClick={()=>setPage((current-1)*pageSize)}><DirectionIcon direction="left" size={23}/></button>}
+   <div {...(featured&&responsiveSize?swipe:{})} id={gridId} key={pageSize+':'+current} className={"videos"+(featured?" video-overview product-page-enter":"")+(featured?" video-paged-grid":"")} data-count={Math.min(visible.length,4)}>{visible.map(v=><VideoCard key={v.id} video={v} isNew={v.id===first?.id} onClick={()=>open(v)}/>)}</div>
+   {paged&&<button type="button" className="product-page-arrow" aria-label="ვიდეოები — შემდეგი გვერდი" aria-controls={gridId} disabled={current===pages-1} onClick={()=>setPage((current+1)*pageSize)}><DirectionIcon size={23}/></button>}
   </div>}
   {videos.length===0&&<div className="empty">ვიდეოები მალე დაემატება.</div>}
   {featured&&<AdvertisementBanner advertisement={advertisement}/>}
@@ -62,4 +68,4 @@ export function Videos({videos,featured=false,advertisement=defaultAdvertisement
 }
 export function LocationSection({settings:s,title="ლოკაცია"}:{settings:Settings;title?:string}){return <section className="location-section" id="location"><div className="container"><SectionHeader title={title}/><div className="location-grid"><div className="location-copy"><h3 className="location-brand">LBLOOM საბაღე ცენტრი</h3><p className="contact-row"><MapPin/>{s.address}</p><a className="contact-row" href={'tel:'+s.phone.replaceAll(' ','')}><Phone/>{s.phone}</a><p className="contact-row"><Clock/>{s.working_hours}</p><SocialLinks settings={s}/><div className="location-messaging">{s.whatsapp_url&&<a href={s.whatsapp_url} target="_blank" rel="noopener noreferrer"><WhatsAppIcon/>WhatsApp</a>}{s.messenger_url&&<a href={s.messenger_url} target="_blank" rel="noopener noreferrer"><MessengerIcon/>Messenger</a>}</div>{s.google_maps_url?<Button href={s.google_maps_url}>გახსენი Google Maps-ში</Button>:<p className="muted">ზუსტი ლოკაცია მალე დაემატება.</p>}</div><div className="map">{s.google_maps_embed_url?<iframe title="LBLOOM ლოკაცია Google Maps-ზე" src={s.google_maps_embed_url} loading="lazy" referrerPolicy="no-referrer-when-downgrade" allowFullScreen/>:<div className="map-empty"><MapPin size={36}/><h3>გვეწვიეთ საბაღე ცენტრში</h3><p>ზუსტი მისამართი დააზუსტეთ ტელეფონით.</p><a href={'tel:'+s.phone.replaceAll(' ','')}>{s.phone}</a></div>}</div></div></div></section>}
 export function Gallery({item}:{item:Item}){return <ProductGallery item={item}/>;}
-export function ProductDetail({item,settings:s,furniture=false}:{item:Item;settings:Settings;furniture?:boolean}){const wa=s.whatsapp_url+'?text='+encodeURIComponent('გამარჯობა, მაინტერესებს '+item.name+'.');return <Shell settings={s}><div className="container detail"><div className="breadcrumbs"><a href="/">მთავარი</a><span>/</span><a href={furniture?'/furniture':'/plants'}>{furniture?'ეზოს ავეჯი':'მცენარეები'}</a><span>/</span>{item.name}</div><div className="detail-grid"><Gallery item={item}/><div className="detail-copy"><span className="eyebrow">{furniture?'ეზოს ავეჯი':'მცენარეები'}</span><h1>{item.name}</h1><div className="detail-price"><Price price={item.price} salePrice={item.sale_price}/></div><dl><dt>{furniture?'კომპლექტაცია / ზომა':'სიმაღლე'}</dt><dd>{furniture?item.dimensions_or_set_details:heightInCentimeters(item.height??'')}</dd><dt>მარაგის სტატუსი</dt><dd className="detail-stock">{item.is_in_stock?'მარაგშია':'ხელმისაწვდომობა დააზუსტეთ'}</dd></dl><div className="detail-description"><h2>პროდუქტის შესახებ</h2><p>{item.description}</p></div><div className="detail-inquiry"><span>დაგვიკავშირდით პროდუქტის შესაკვეთად</span><div className="contact-actions">{s.whatsapp_url&&<Button href={wa}>WhatsApp</Button>}{s.messenger_url&&<Button href={s.messenger_url} secondary>Messenger</Button>}</div></div></div></div></div></Shell>}
+export function ProductDetail({item,settings:s,furniture=false,related=[]}:{item:Item;settings:Settings;furniture?:boolean;related?:Item[]}){const wa=s.whatsapp_url+'?text='+encodeURIComponent('გამარჯობა, მაინტერესებს '+item.name+'.');return <Shell settings={s}><div className="container detail"><div className="breadcrumbs"><a href="/">მთავარი</a><span>/</span><a href={furniture?'/furniture':'/plants'}>{furniture?'ეზოს ავეჯი':'მცენარეები'}</a><span>/</span>{item.name}</div><div className="detail-grid"><Gallery item={item}/><div className="detail-copy"><span className="eyebrow">{furniture?'ეზოს ავეჯი':'მცენარეები'}</span><h1>{item.name}</h1><div className="detail-price"><Price price={item.price} salePrice={item.sale_price}/></div><dl><dt>{furniture?'კომპლექტაცია / ზომა':'სიმაღლე'}</dt><dd>{furniture?item.dimensions_or_set_details:heightInCentimeters(item.height??'')}</dd><dt>მარაგის სტატუსი</dt><dd className="detail-stock">{item.is_in_stock?'მარაგშია':'ხელმისაწვდომობა დააზუსტეთ'}</dd></dl><div className="detail-description"><h2>პროდუქტის შესახებ</h2><p>{item.description}</p></div><div className="detail-inquiry"><span>დაგვიკავშირდით პროდუქტის შესაკვეთად</span><div className="contact-actions">{s.whatsapp_url&&<Button href={wa}>WhatsApp</Button>}{s.messenger_url&&<Button href={s.messenger_url} secondary>Messenger</Button>}</div></div></div></div>{related.length>0&&<section className="related-products" aria-label="მსგავსი პროდუქტები"><SectionHeader title="მსგავსი პროდუქტები"/><HomeProducts items={related} furniture={furniture}/></section>}</div></Shell>}

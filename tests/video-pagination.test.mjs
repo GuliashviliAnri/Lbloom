@@ -11,7 +11,7 @@ test('home video arrows reveal the fifth video, retain latest badge, and do not 
  const react={useState:initial=>{const i=hook++;return [state[i]??initial,v=>{state[i]=v}]},useRef:()=>({current:null}),useId:()=> 'videos',useEffect:()=>{}};
  const exports={};
  const code=ts.transpileModule(readFileSync(new URL('../components/site.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020,jsx:ts.JsxEmit.ReactJSX}}).outputText;
- runInNewContext(code,{exports,require:n=>n==='react'?react:n==='react/jsx-runtime'?require(n):n==='@/lib/video-order'?{latestVideo:v=>v[0]}:{default:()=>null}});
+ runInNewContext(code,{exports,require:n=>n==='react'?{...require(n),...react}:n==='react/jsx-runtime'?require(n):n==='./use-page-swipe'?{default:()=>({})}:n==='./use-card-page-size'?{default:()=>4}:n==='@/lib/video-order'?{latestVideo:v=>v[0]}:{default:()=>null}});
  const videos=Array.from({length:9},(_,i)=>({id:String(i+1),title:String(i+1)}));
  const render=()=>{hook=0;return exports.Videos({videos,featured:true,advertisement:null})};
  const cards=t=>nodes(t).filter(n=>n?.type===exports.VideoCard);
