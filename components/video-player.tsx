@@ -1,8 +1,10 @@
 "use client";
 import {useEffect,useRef,useState} from 'react';
 import FacebookVideo from './facebook-video';
+import {automaticVideoCover} from '@/lib/facebook-cover';
 import {facebookVideoUrl} from '@/lib/video-source';
 import {Eye,Clock} from 'lucide-react';
+import {FacebookIcon} from './social-links';
 import {supabase} from '@/lib/supabase';
 import type {Video} from '@/lib/types';
 let temporaryVisitor:string|undefined;
@@ -43,7 +45,7 @@ export default function VideoPlayer({video}:{video:Video}){
  }
  useEffect(()=>{if(facebook)void record();},[video.id,facebook]);
  return <>
-  <div className={"video-player"+(facebook?" facebook-player":"")}>{facebook?<FacebookVideo url={video.video_url} title={video.title}/>:<video src={video.video_url} poster={video.thumbnail_url} controls autoPlay playsInline onPlaying={()=>void record()}/>}</div>
-  <div className="video-player-meta"><div className="video-view-count" role="status" aria-live="polite"><Eye size={17} aria-hidden="true"/>{count!==null?<span><strong>{count.toLocaleString('en-US')}</strong> {facebook?'გახსნა':'ნახვა'}</span>:<span>{failed?'ნახვები დროებით მიუწვდომელია':'ნახვები იტვირთება…'}</span>}</div>{video.duration&&<span className="video-player-duration"><Clock size={15} aria-hidden="true"/>{video.duration}</span>}</div>
+  <div className={"video-player"+(facebook?" facebook-player":"")}>{facebook?<FacebookVideo url={video.video_url} title={video.title} cover={video.thumbnail_url||automaticVideoCover(video.video_url)}/>:<video src={video.video_url} poster={video.thumbnail_url} controls autoPlay playsInline onPlaying={()=>void record()}/>}</div>
+  <div className="video-player-meta"><div className="video-view-count" role="status" aria-live="polite"><Eye size={17} aria-hidden="true"/>{count!==null?<span><strong>{count.toLocaleString('en-US')}</strong> {facebook?'გახსნა':'ნახვა'}</span>:<span>{failed?'ნახვები დროებით მიუწვდომელია':'ნახვები იტვირთება…'}</span>}</div><div className="video-player-actions">{video.duration&&<span className="video-player-duration"><Clock size={15} aria-hidden="true"/>{video.duration}</span>}{facebook&&<a className="video-facebook-button" href={facebookVideoUrl(video.video_url)!} target="_blank" rel="noopener noreferrer"><FacebookIcon/>Facebook-ზე ნახვა</a>}</div></div>
  </>;
 }

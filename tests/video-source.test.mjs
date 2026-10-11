@@ -28,3 +28,20 @@ test('uploaded video and signed direct file links stay supported',()=>{
  assert.equal(validVideoUrl('data:text/html,test'),false);
  assert.equal(validVideoUrl('https://www.facebook.com/not-a-video.mp4'),false);
 });
+
+test('Facebook footer action uses one blue logo button beside the view count',async()=>{
+ const {createRequire}=await import('node:module');const require=createRequire(import.meta.url);
+ const React=await import('react');const {renderToStaticMarkup}=await import('react-dom/server');
+ function compile(path,deps={}){const exports={};runInNewContext(ts.transpileModule(readFileSync(new URL(path,import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX}}).outputText,{exports,URL,URLSearchParams,require:name=>deps[name]??require(name)});return exports;}
+ const cover=compile('../lib/facebook-cover.ts',{'./video-source':exports});
+ const fb=compile('../components/facebook-video.tsx',{'@/lib/video-source':exports,'./use-video-aspect':{default:()=>16/9}});
+ const social=compile('../components/social-links.tsx');
+ const Player=compile('../components/video-player.tsx',{'./facebook-video':fb,'@/lib/video-source':exports,'@/lib/supabase':{supabase:null},'@/lib/facebook-cover':cover,'./social-links':social}).default;
+ const video={id:'test',title:'Horizontal reel',video_url:'https://www.facebook.com/reel/123',thumbnail_url:'https://example.com/cover.jpg',duration:'0:30'};
+ const html=renderToStaticMarkup(React.createElement(Player,{video}));
+ assert.ok(html.includes('video-facebook-button'));assert.ok(html.includes('Facebook-ზე ნახვა'));
+ assert.equal((html.match(/<a /g)||[]).length,1);assert.ok(html.indexOf('video-player-meta')<html.indexOf('video-facebook-button'));
+ assert.ok(html.includes('--video-ratio:1.777'));assert.ok(!html.includes('Facebook-ზე გახსნა'));
+ const preview=renderToStaticMarkup(React.createElement(fb.default,{url:video.video_url,title:video.title,preview:true}));
+ assert.ok(preview.includes('loading="lazy"'));assert.ok(preview.includes('tabindex="-1"'));assert.ok(!preview.includes('<a '));
+});

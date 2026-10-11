@@ -1,5 +1,6 @@
 "use client";
 /* eslint-disable @next/next/no-html-link-for-pages -- Native links preserve navigation in the Sites runtime. */
+import {automaticVideoCover} from '@/lib/facebook-cover';
 import FacebookVideo from '@/components/facebook-video';
 import {facebookVideoUrl,validVideoUrl} from '@/lib/video-source';
 import {openingVideoFrame} from '@/lib/video-cover';
@@ -135,9 +136,9 @@ return <div className="admin admin-workspace">
      <label>ან ჩასვით Facebook Reel-ის / ვიდეოს ბმული<input type="text" required value={String(draft.video_url??'')} placeholder="https://www.facebook.com/reel/… ან https://…/video.mp4" onChange={e=>setDraft(d=>({...d,video_url:e.target.value,duration:'',thumbnail_url:''}))}/></label>
     </fieldset>
     <fieldset disabled={busy||uploading} className="admin-video-visuals"><legend>წინასწარი ნახვა და გარეკანი</legend>
-     <div className="admin-video-stage">{draft.video_url?(facebookVideoUrl(String(draft.video_url))?<FacebookVideo url={String(draft.video_url)} title={String(draft.title||'ვიდეოს წინასწარი ნახვა')}/>:<video key={String(draft.video_url)} onLoadedMetadata={event=>{const duration=formatVideoDuration(event.currentTarget.duration);const url=String(draft.video_url);if(duration)setDraft(current=>current.video_url===url?{...current,duration}:current);}} src={String(draft.video_url)} poster={String(draft.thumbnail_url??'')} controls playsInline preload="metadata"/>):<div className="admin-video-placeholder"><Play size={30}/><strong>ვიდეო აქ გამოჩნდება</strong><p>ატვირთეთ ფაილი ან ჩასვით ბმული</p></div>}</div>
+     <div className="admin-video-stage">{draft.video_url?(facebookVideoUrl(String(draft.video_url))?<FacebookVideo url={String(draft.video_url)} title={String(draft.title||'ვიდეოს წინასწარი ნახვა')} cover={String(draft.thumbnail_url||automaticVideoCover(String(draft.video_url??'')))}/>:<video key={String(draft.video_url)} onLoadedMetadata={event=>{const duration=formatVideoDuration(event.currentTarget.duration);const url=String(draft.video_url);if(duration)setDraft(current=>current.video_url===url?{...current,duration}:current);}} src={String(draft.video_url)} poster={String(draft.thumbnail_url??'')} controls playsInline preload="metadata"/>):<div className="admin-video-placeholder"><Play size={30}/><strong>ვიდეო აქ გამოჩნდება</strong><p>ატვირთეთ ფაილი ან ჩასვით ბმული</p></div>}</div>
      <div className="admin-video-cover"><label>გარეკანი ვიდეოს დასაწყისიდან<input className="admin-file-input" type="file" accept="video/mp4,video/webm,.mp4,.webm" onChange={e=>{void coverFromVideo(e.target.files);e.target.value=''}}/></label><p className="admin-field-hint">აირჩიეთ ორიგინალი ვიდეო — მხოლოდ საწყისი კადრის ფოტო აიტვირთება. ვიდეოს ზომა აქ შეზღუდული არ არის.</p>{renderField('thumbnail_url')}</div>
-     <p className="admin-field-hint">ატვირთულ ვიდეოს საწყისი კადრი ავტომატურად ემატება. სურვილის შემთხვევაში შეცვალეთ ფოტოთი · JPG, PNG ან WebP · მაქსიმუმ 8 MB</p>
+     <p className="admin-field-hint">Facebook-ის ქავერი ავტომატურად გამოჩნდება. ატვირთულ ვიდეოს საწყისი კადრი ემატება. სურვილის შემთხვევაში შეცვალეთ ფოტოთი · JPG, PNG ან WebP · მაქსიმუმ 8 MB</p>
     </fieldset>
    </div>:(table==='products'||table==='furniture')?<div className="admin-product-layout">
     <div className="admin-product-information">
