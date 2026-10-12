@@ -34,9 +34,9 @@ test('Facebook footer action uses one blue logo button beside the view count',as
  const React=await import('react');const {renderToStaticMarkup}=await import('react-dom/server');
  function compile(path,deps={}){const exports={};runInNewContext(ts.transpileModule(readFileSync(new URL(path,import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX}}).outputText,{exports,URL,URLSearchParams,require:name=>deps[name]??require(name)});return exports;}
  const cover=compile('../lib/facebook-cover.ts',{'./video-source':exports});
- const fb=compile('../components/facebook-video.tsx',{'@/lib/video-source':exports,'./use-video-aspect':{default:()=>16/9},'./use-embedded-fullscreen':{default:()=>false}});
+ const fb=compile('../components/facebook-video.tsx',{'@/lib/video-source':exports,'./use-video-cover':{default:(_url,saved)=>saved||''},'./use-video-aspect':{default:()=>16/9},'./use-embedded-fullscreen':{default:()=>false}});
  const social=compile('../components/social-links.tsx');
- const Player=compile('../components/video-player.tsx',{'./facebook-video':fb,'@/lib/video-source':exports,'@/lib/supabase':{supabase:null},'@/lib/facebook-cover':cover,'./social-links':social,'./use-video-aspect':{default:()=>16/9},'@/lib/facebook-playback':{preloadFacebookPlayback:async()=>'',preparedFacebookPlayback:()=>null}}).default;
+ const Player=compile('../components/video-player.tsx',{'./facebook-video':fb,'@/lib/video-source':exports,'@/lib/supabase':{supabase:null},'@/lib/facebook-cover':cover,'./social-links':social,'./use-video-cover':{default:(_url,saved)=>saved||''},'./use-video-aspect':{default:()=>16/9},'@/lib/facebook-playback':{preloadFacebookPlayback:async()=>'',preparedFacebookPlayback:()=>null}}).default;
  const video={id:'test',title:'Horizontal reel',video_url:'https://www.facebook.com/reel/123',thumbnail_url:'https://example.com/cover.jpg',duration:'0:30'};
  const html=renderToStaticMarkup(React.createElement(Player,{video}));
  assert.ok(html.includes('video-facebook-button'));assert.ok(html.includes('Facebook-ზე ნახვა'));

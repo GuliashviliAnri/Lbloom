@@ -977,3 +977,5 @@ select, .admin-form select, .mobile-category select {
 .story-copy-status{font-size:12px;line-height:1.6;color:var(--muted)}
 .story-copy-field{width:100%;padding:9px;border:1px solid var(--line);border-radius:5px;font-size:12px}
 @media(max-width:767px){.story-share-actions{width:100%}.story-link-copy{max-width:none;width:100%}.story-copy-button{width:100%}}
+
+.video-cover-empty{display:block;width:100%;height:100%;background:var(--accent)}

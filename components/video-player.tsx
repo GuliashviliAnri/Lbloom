@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useRef,useState,type CSSProperties} from 'react';
 import useVideoAspect from './use-video-aspect';
-import {automaticVideoCover} from '@/lib/facebook-cover';
+import useVideoCover from './use-video-cover';
 import {facebookVideoUrl} from '@/lib/video-source';
 import {preloadFacebookPlayback,preparedFacebookPlayback,forgetFacebookPlayback} from '@/lib/facebook-playback';
 import {Eye,Clock} from 'lucide-react';
@@ -32,7 +32,7 @@ export default function VideoPlayer({video}:{video:Video}){
   preloadFacebookPlayback(facebookUrl,controller.signal).then(src=>{if(active)setResolved({url:facebookUrl,src});}).catch(()=>{if(active)setPlaybackFailed(true);}).finally(()=>clearTimeout(timeout));
   return()=>{active=false;clearTimeout(timeout);controller.abort();};
  },[facebookUrl,video.video_url,retry]);
- const cover=video.thumbnail_url||(facebook?automaticVideoCover(video.video_url):'');
+ const cover=useVideoCover(video.video_url,video.thumbnail_url);
  const coverAspect=useVideoAspect(cover);const [mediaAspect,setMediaAspect]=useState<number|null>(null);
  const [count,setCount]=useState<number|null>(null);
  const [failed,setFailed]=useState(false);
