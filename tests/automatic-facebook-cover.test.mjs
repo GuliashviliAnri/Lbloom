@@ -9,8 +9,8 @@ test('admin cover upload is deduplicated; repairs preserve existing covers and g
  const chain={eq:(field,value)=>{guards.push(['eq',field,value]);return chain;},is:(field,value)=>{guards.push(['is',field,value]);return chain;},select:()=>chain,maybeSingle:async()=>({data:databaseResult,error:null})};
  const supabase={storage:{from:bucket=>({upload:async(name,file,options)=>{uploads.push({bucket,name,file,options});return{error:null};},getPublicUrl:()=>({data:{publicUrl:'https://project.supabase.co/cover.jpg'}})})},from:table=>{assert.equal(table,'videos');return{update:payload=>{assert.deepEqual(Object.keys(payload),['thumbnail_url']);return chain;}}}};
  class File{constructor(parts,name,{type}){this.type=type;this.name=name;}}
- runInNewContext(code('../lib/admin-facebook-cover.ts'),{exports,AbortSignal,File,crypto:{randomUUID:()=> 'generated'},require:name=>name==='./supabase'?{supabase}:name==='./video-source'?source:name==='./facebook-cover-client'?{fetchFacebookCover:async()=>blob}:{prepareImage:async(file,maxEdge)=>{assert.equal(maxEdge,900);return file;}}});
- await Promise.all([exports.uploadFacebookCover(url),exports.uploadFacebookCover(url)]);assert.equal(uploads.length,1);assert.equal(uploads[0].bucket,'video-thumbnails');assert.equal(uploads[0].options.upsert,false);
+ runInNewContext(code('../lib/admin-facebook-cover.ts'),{exports,AbortSignal,File,setTimeout,clearTimeout,crypto:{randomUUID:()=> 'generated'},require:name=>name==='./supabase'?{supabase}:name==='./video-source'?source:name==='./facebook-cover-client'?{fetchFacebookCover:async()=>blob}:{prepareImage:async(file,maxEdge)=>{assert.equal(maxEdge,900);return file;}}});
+ await Promise.all([exports.uploadFacebookCover(url),exports.uploadFacebookCover(url)]);assert.equal(uploads.length,1);assert.equal(uploads[0].bucket,'video-thumbnails');assert.equal(uploads[0].options.upsert,false);assert.equal(uploads[0].file,blob);
  assert.equal(await exports.repairFacebookCover({id:'1',video_url:url,thumbnail_url:'manual.jpg'}),null);assert.equal(uploads.length,1);
  assert.deepEqual(await exports.repairFacebookCover({id:'1',video_url:url,thumbnail_url:''}),databaseResult);assert.deepEqual(guards,[['eq','id','1'],['eq','video_url',url],['eq','thumbnail_url','']]);
  guards.length=0;databaseResult=null;assert.equal(await exports.repairFacebookCover({id:'1',video_url:url,thumbnail_url:null}),null);assert.deepEqual(guards.at(-1),['is','thumbnail_url',null]);
@@ -21,4 +21,16 @@ test('missing-cover preview uses a blob image; saved covers skip fetching and st
  function render(url,saved=''){index=effectIndex=0;const value=exports.default(url,saved);for(const effect of effects)if(effect.fn){const fn=effect.fn;effect.fn=null;effect.cleanup=fn();}return value;}
  assert.equal(render(url,'saved.jpg'),'saved.jpg');assert.equal(requests.length,0);assert.equal(render(url),'');requests[0].resolve(new Blob(['photo']));await new Promise(resolve=>setImmediate(resolve));assert.equal(render(url),'blob:generated-cover');render('https://www.facebook.com/reel/999');assert.deepEqual(revoked,['blob:generated-cover']);assert.equal(requests[0].signal.aborted,true);
  effects.forEach(effect=>effect.cleanup?.());assert.equal(requests[1].signal.aborted,true);requests[1].resolve(new Blob(['photo']));await new Promise(resolve=>setImmediate(resolve));assert.equal(states[0].url,url);
+});
+test('automatic cover work leaves the admin video form and manual photo upload usable',()=>{
+ const exports={};let index=0;const effects=[];
+ const values={0:true,1:true,4:'videos',5:[],6:[],7:{title:'New reel',video_url:url,thumbnail_url:''},8:true,10:false,11:false,14:false,15:true,17:{dirty:false,working:false}};
+ const react={useState:initial=>{const i=index++;return[i in values?values[i]:typeof initial==='function'?initial():initial,()=>{}];},useRef:initial=>({current:initial}),useEffect:(fn,deps)=>effects.push(deps),useCallback:fn=>fn};
+ const deps={'react':react,'@/lib/supabase':{supabase:{}},'@/lib/video-source':source,'@/lib/data':{settings:{}},'@/lib/admin-categories':{defaultPlantFilters:[]},'@/lib/furniture-categories':{furnitureCategories:[],furnitureCategory:()=> 'other'},'@/components/admin-unsaved-changes':{draftFingerprint:()=> 'baseline',useAdminUnsavedChanges:()=>({requestLeave:fn=>fn(),warning:null})}};
+ runInNewContext(ts.transpileModule(readFileSync(new URL('../app/admin/page.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020,jsx:ts.JsxEmit.ReactJSX}}).outputText,{exports,window:{},require:name=>deps[name]??(name==='react/jsx-runtime'||name==='lucide-react'?require(name):{default:()=>null})});
+ function nodes(tree){return [tree,...(Array.isArray(tree)?tree:tree?.props?.children?[tree.props.children]:[]).flatMap(child=>Array.isArray(child)?child.flatMap(nodes):child&&typeof child==='object'?nodes(child):[])];}
+ const tree=nodes(exports.default());const fields=tree.filter(node=>node?.type==='fieldset');assert.ok(fields.length>0);assert.ok(fields.every(node=>node.props.disabled===false));
+ const photos=tree.filter(node=>node?.type==='input'&&node.props.accept==='image/jpeg,image/png,image/webp');assert.ok(photos.length>0);assert.ok(photos.every(node=>node.props.disabled===false));
+ const save=tree.find(node=>node?.type==='button'&&node.props.children==='ცვლილებების შენახვა');assert.equal(save.props.disabled,false);
+ assert.equal(effects.some(deps=>deps?.includes(url)),false);
 });
