@@ -3,6 +3,7 @@ import TopGeCounter from '@/components/top-ge-counter';
 import {automaticVideoCover} from '@/lib/facebook-cover';
 import {facebookVideoUrl} from '@/lib/video-source';
 import VideoPlayer from './video-player';
+import useVideoPreparation from './use-video-preparation';
 import HomeProducts from './home-products';
 import usePageSwipe from './use-page-swipe';
 import useCardPageSize from './use-card-page-size';
@@ -30,7 +31,7 @@ export function ProductCard({item,furniture=false}:{item:Item;furniture?:boolean
 export function FurnitureCard({item}:{item:Item}){return <ProductCard item={item} furniture/>}
 export function ServiceCard({service:s}:{service:Service}){return <a href={'/services/'+s.slug} className="service-card"><ResponsiveImage src={s.image_url} alt={s.title} loading="lazy"/><div><h3>{s.title}</h3><p>{s.description}</p><span className="service-view">ნახვა <DirectionIcon/></span></div></a>}
 export function GardenStoryCard({story:s}:{story:GardenStory}){return <a href={'/garden-stories/'+s.slug} className="story-card"><ResponsiveImage src={s.image_url} alt={s.title} loading="lazy"/><div><span className="story-label">საბაღე რჩევები</span><StoryDate value={s.created_at}/><h3>{s.title}</h3><p>{s.excerpt}</p><span className="text-link">წაიკითხე</span></div></a>}
-export function VideoCard({video,onClick,isNew=false}:{video:Video;onClick:()=>void;isNew?:boolean}){return <button className="video-card" onClick={onClick}><div>{video.thumbnail_url&&!video.thumbnail_url.includes('logo-mark')?<ResponsiveImage src={video.thumbnail_url} alt={video.title} loading="lazy"/>:facebookVideoUrl(video.video_url)?<ResponsiveImage src={automaticVideoCover(video.video_url)} alt={video.title} loading="lazy"/>:<video className="video-opening-preview" src={video.video_url+'#t=0.01'} muted playsInline preload="metadata" aria-hidden="true"/>}{isNew&&<span className="new-badge">სიახლე</span>}<span className="play"><Play fill="currentColor" size={20}/></span></div><div className="video-caption"><h3>{video.title}</h3><span className="video-duration">{video.duration}</span></div></button>}
+export function VideoCard({video,onClick,isNew=false}:{video:Video;onClick:()=>void;isNew?:boolean}){const preparation=useVideoPreparation(video.video_url);return <button {...preparation} className="video-card" onClick={onClick}><div>{video.thumbnail_url&&!video.thumbnail_url.includes('logo-mark')?<ResponsiveImage src={video.thumbnail_url} alt={video.title} loading="lazy"/>:facebookVideoUrl(video.video_url)?<ResponsiveImage src={automaticVideoCover(video.video_url)} alt={video.title} loading="lazy"/>:<video className="video-opening-preview" src={video.video_url+'#t=0.01'} muted playsInline preload="metadata" aria-hidden="true"/>}{isNew&&<span className="new-badge">სიახლე</span>}<span className="play"><Play fill="currentColor" size={20}/></span></div><div className="video-caption"><h3>{video.title}</h3><span className="video-duration">{video.duration}</span></div></button>}
 export function Videos({videos,featured=false,advertisement=defaultAdvertisement}:{videos:Video[];featured?:boolean;advertisement?:Advertisement|null}) {
  const [active,setActive]=useState<Video|null>(null);
  const [page,setPage]=useState(0);

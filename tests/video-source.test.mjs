@@ -36,12 +36,13 @@ test('Facebook footer action uses one blue logo button beside the view count',as
  const cover=compile('../lib/facebook-cover.ts',{'./video-source':exports});
  const fb=compile('../components/facebook-video.tsx',{'@/lib/video-source':exports,'./use-video-aspect':{default:()=>16/9},'./use-embedded-fullscreen':{default:()=>false}});
  const social=compile('../components/social-links.tsx');
- const Player=compile('../components/video-player.tsx',{'./facebook-video':fb,'@/lib/video-source':exports,'@/lib/supabase':{supabase:null},'@/lib/facebook-cover':cover,'./social-links':social,'./use-video-aspect':{default:()=>16/9}}).default;
+ const Player=compile('../components/video-player.tsx',{'./facebook-video':fb,'@/lib/video-source':exports,'@/lib/supabase':{supabase:null},'@/lib/facebook-cover':cover,'./social-links':social,'./use-video-aspect':{default:()=>16/9},'@/lib/facebook-playback':{preloadFacebookPlayback:async()=>'',preparedFacebookPlayback:()=>null}}).default;
  const video={id:'test',title:'Horizontal reel',video_url:'https://www.facebook.com/reel/123',thumbnail_url:'https://example.com/cover.jpg',duration:'0:30'};
  const html=renderToStaticMarkup(React.createElement(Player,{video}));
  assert.ok(html.includes('video-facebook-button'));assert.ok(html.includes('Facebook-ზე ნახვა'));
  assert.equal((html.match(/<a /g)||[]).length,1);assert.ok(html.indexOf('video-player-meta')<html.indexOf('video-facebook-button'));
- assert.ok(/<video[^>]+playsinline/i.test(html));assert.ok(html.includes('/api/video-source?url='));assert.ok(!html.includes('<iframe'));assert.ok(!html.includes('Facebook-ზე გახსნა'));
+ assert.ok(!html.includes('ვიდეო იტვირთება'));assert.ok(/<video[^>]+playsinline/i.test(html));assert.ok(html.includes('poster=')&&!html.includes('src=""'));assert.ok(!html.includes('/api/video-source'));assert.ok(!html.includes('<iframe'));assert.ok(!html.includes('Facebook-ზე გახსნა'));
+ const uploaded=renderToStaticMarkup(React.createElement(Player,{video:{...video,video_url:'https://example.com/upload.mp4'}}));assert.ok(/<video[^>]+playsinline/i.test(uploaded));assert.ok(uploaded.includes('https://example.com/upload.mp4'));
  const preview=renderToStaticMarkup(React.createElement(fb.default,{url:video.video_url,title:video.title,preview:true}));
  assert.ok(preview.includes("fullscreen &#x27;none&#x27;"));assert.ok(!preview.includes('allowFullScreen=')&&!preview.includes('allowfullscreen=""'));assert.ok(preview.includes('allowfullscreen=false'));assert.ok(preview.includes('loading="lazy"'));assert.ok(preview.includes('tabindex="-1"'));assert.ok(!preview.includes('<a '));
 });
