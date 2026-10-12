@@ -1,6 +1,6 @@
 "use client";
-import {useEffect,useRef,useState} from 'react';
-import FacebookVideo from './facebook-video';
+import {useEffect,useRef,useState,type CSSProperties} from 'react';
+import useVideoAspect from './use-video-aspect';
 import {automaticVideoCover} from '@/lib/facebook-cover';
 import {facebookVideoUrl} from '@/lib/video-source';
 import {Eye,Clock} from 'lucide-react';
@@ -17,6 +17,10 @@ function visitorId(){
 }
 export default function VideoPlayer({video}:{video:Video}){
  const facebook=Boolean(facebookVideoUrl(video.video_url));
+ const source=facebook?'/api/video-source?url='+encodeURIComponent(facebookVideoUrl(video.video_url)!):video.video_url;
+ const [playbackFailed,setPlaybackFailed]=useState(false);
+ const cover=video.thumbnail_url||(facebook?automaticVideoCover(video.video_url):'');
+ const coverAspect=useVideoAspect(cover);const [mediaAspect,setMediaAspect]=useState<number|null>(null);
  const [count,setCount]=useState<number|null>(null);
  const [failed,setFailed]=useState(false);
  const recorded=useRef(false);
@@ -43,9 +47,8 @@ export default function VideoPlayer({video}:{video:Video}){
   }catch{/* Counting failures must not interrupt playback. */}
   finally{pending.current=false}
  }
- useEffect(()=>{if(facebook)void record();},[video.id,facebook]);
  return <>
-  <div className={"video-player"+(facebook?" facebook-player":"")}>{facebook?<FacebookVideo url={video.video_url} title={video.title} cover={video.thumbnail_url||automaticVideoCover(video.video_url)}/>:<video src={video.video_url} poster={video.thumbnail_url} controls autoPlay playsInline onPlaying={()=>void record()}/>}</div>
-  <div className="video-player-meta"><div className="video-view-count" role="status" aria-live="polite"><Eye size={17} aria-hidden="true"/>{count!==null?<span><strong>{count.toLocaleString('en-US')}</strong> {facebook?'გახსნა':'ნახვა'}</span>:<span>{failed?'ნახვები დროებით მიუწვდომელია':'ნახვები იტვირთება…'}</span>}</div><div className="video-player-actions">{video.duration&&<span className="video-player-duration"><Clock size={15} aria-hidden="true"/>{video.duration}</span>}{facebook&&<a className="video-facebook-button" href={facebookVideoUrl(video.video_url)!} target="_blank" rel="noopener noreferrer"><FacebookIcon/>Facebook-ზე ნახვა</a>}</div></div>
+  <div className="video-player" style={{'--video-ratio':mediaAspect??coverAspect} as CSSProperties}>{playbackFailed?<div className="video-playback-failed" role="status"><p>ვიდეოს დაკვრა ვერ მოხერხდა.</p>{facebook?<p>სცადეთ Facebook-ზე ნახვა ქვემოთ მოცემული ღილაკით.</p>:<p>სცადეთ ხელახლა.</p>}<button type="button" className="button secondary" onClick={()=>setPlaybackFailed(false)}>ხელახლა ცდა</button></div>:<video key={source} src={source} poster={cover||undefined} controls autoPlay playsInline preload="metadata" onLoadedMetadata={event=>{const media=event.currentTarget;if(media.videoWidth&&media.videoHeight)setMediaAspect(media.videoWidth/media.videoHeight);}} onPlaying={()=>void record()} onError={()=>setPlaybackFailed(true)}/>}</div>
+  <div className="video-player-meta"><div className="video-view-count" role="status" aria-live="polite"><Eye size={17} aria-hidden="true"/>{count!==null?<span><strong>{count.toLocaleString('en-US')}</strong> ნახვა</span>:<span>{failed?'ნახვები დროებით მიუწვდომელია':'ნახვები იტვირთება…'}</span>}</div><div className="video-player-actions">{video.duration&&<span className="video-player-duration"><Clock size={15} aria-hidden="true"/>{video.duration}</span>}{facebook&&<a className="video-facebook-button" href={facebookVideoUrl(video.video_url)!} target="_blank" rel="noopener noreferrer"><FacebookIcon/>Facebook-ზე ნახვა</a>}</div></div>
  </>;
 }

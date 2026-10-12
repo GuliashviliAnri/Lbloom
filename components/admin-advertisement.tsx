@@ -6,15 +6,21 @@ import {supabase} from '@/lib/supabase';
 import {prepareImage} from '@/lib/prepare-image';
 import {advertisementLink,defaultAdvertisement,type Advertisement} from '@/lib/advertisement';
 import AdvertisementBanner from './advertisement-banner';
-export default function AdminAdvertisement(){
+import {draftFingerprint} from './admin-unsaved-changes';
+const editableFields=['title','image_url','link_url','is_active'] as const;
+export default function AdminAdvertisement({onStateChange}:{onStateChange?:(state:{dirty:boolean;working:boolean})=>void}){
  const [draft,setDraft]=useState<Advertisement>(defaultAdvertisement);
  const [loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[uploading,setUploading]=useState(false);
  const [missing,setMissing]=useState(false),[available,setAvailable]=useState(false),[message,setMessage]=useState('');
+ const [baseline,setBaseline]=useState(()=>draftFingerprint(defaultAdvertisement,editableFields));
+ const dirty=available&&draftFingerprint(draft,editableFields)!==baseline;
+ useEffect(()=>{onStateChange?.({dirty,working:loading||saving||uploading});},[dirty,loading,saving,uploading,onStateChange]);
+ useEffect(()=>()=>onStateChange?.({dirty:false,working:false}),[onStateChange]);
  const load=useCallback(async()=>{
   if(!supabase)return;setLoading(true);setMessage('');setAvailable(false);
   try{const {data,error}=await supabase.from('advertisements').select('*').eq('id',1).abortSignal(AbortSignal.timeout(12000)).maybeSingle();
    if(error){setMissing(['PGRST205','42P01'].includes(error.code));if(!['PGRST205','42P01'].includes(error.code))setMessage('რეკლამის ჩატვირთვა ვერ მოხერხდა. სცადეთ ხელახლა.');}
-   else{setMissing(false);setAvailable(true);setDraft(data??defaultAdvertisement);}
+   else{setMissing(false);setAvailable(true);setDraft(data??defaultAdvertisement);setBaseline(draftFingerprint(data??defaultAdvertisement,editableFields));}
   }catch{setMessage('კავშირი ვერ დამყარდა. სცადეთ ხელახლა.');}finally{setLoading(false);}
  },[]);
  useEffect(()=>{void load()},[load]);
@@ -35,7 +41,7 @@ export default function AdminAdvertisement(){
   try{const payload={id:1,title:draft.title.trim(),image_url:draft.image_url.trim(),link_url:draft.link_url.trim(),is_active:draft.is_active};
    const {error}=await supabase.from('advertisements').upsert(payload,{onConflict:'id'}).abortSignal(AbortSignal.timeout(12000));
    if(error){setMessage('რეკლამა ვერ შეინახა. გადაამოწმეთ კავშირი და სცადეთ ხელახლა.');return;}
-   setDraft(payload);setMessage('რეკლამა შენახულია. ცვლილება საიტის განახლებისთანავე გამოჩნდება.');
+   setDraft(payload);setBaseline(draftFingerprint(payload,editableFields));setMessage('რეკლამა შენახულია. ცვლილება საიტის განახლებისთანავე გამოჩნდება.');
   }catch{setMessage('შენახვა ვერ მოხერხდა. სცადეთ ხელახლა.');}finally{setSaving(false);}
  }
  if(loading)return <div className="admin-empty" role="status"><LoaderCircle className="admin-spinner" size={22}/>რეკლამა იტვირთება…</div>;
@@ -51,7 +57,7 @@ export default function AdminAdvertisement(){
     </div>
    </fieldset>
    <fieldset className="admin-ad-preview"><legend>წინასწარი ნახვა</legend><p className="admin-field-hint">ბანერი გამოჩნდება მთავარ გვერდზე, ვიდეოების ქვემოთ.{!draft.is_active&&' ამჟამად გამორთულია.'}</p><AdvertisementBanner advertisement={{...draft,is_active:true}}/></fieldset>
-   <div className="admin-savebar"><span>{uploading?'ფოტო იტვირთება…':'სარეკლამო ადგილი მთავარ გვერდზე'}</span><button className="button" disabled={!available||saving||uploading}>{saving||uploading?<><LoaderCircle className="admin-spinner" size={17}/>მიმდინარეობს…</>:'ცვლილებების შენახვა'}</button></div>
+   <div className="admin-savebar"><span>{uploading?'ფოტო იტვირთება…':dirty?'შეუნახავი ცვლილებები':'სარეკლამო ადგილი მთავარ გვერდზე'}</span><button className="button" disabled={!available||saving||uploading}>{saving||uploading?<><LoaderCircle className="admin-spinner" size={17}/>მიმდინარეობს…</>:'ცვლილებების შენახვა'}</button></div>
   </form>
  </>;
 }

@@ -34,10 +34,22 @@ test('empty introduction falls back to body and unsafe image URLs are excluded',
  assert.equal(api.storyUrl('a?b&c','javascript:alert(1)'),'https://lbloom.ge/garden-stories/a%3Fb%26c');
 });
 test('share button is available in server HTML without the Facebook SDK',()=>{
- const Share=compile('../components/story-share.tsx',{'@/lib/story-sharing':api}).default;
+ const Copy=compile('../components/story-link-copy.tsx').default;
+ const Share=compile('../components/story-share.tsx',{'@/lib/story-sharing':api,'./story-link-copy':{default:Copy}}).default;
  const html=renderToStaticMarkup(Share({slug:story.slug}));
  assert.match(html,/Facebook-ზე გაზიარება/);
+ assert.match(html,/ბმულის კოპირება/);
  assert.match(html,/https:\/\/www.facebook.com\/sharer\/sharer.php\?u=/);
  assert.match(html,/target="_blank"/);
  assert.match(html,/rel="noopener noreferrer"/);
+});
+
+test('copy sends the canonical article URL and clipboard denial offers manual copying',async()=>{
+ async function fixture(clipboard){
+  const state=[];let index=0;const react={useState:initial=>{const i=index++;if(!(i in state))state[i]=initial;return[state[i],value=>state[i]=value];},useEffect(){},useRef:value=>({current:value})};
+  const exports={};runInNewContext(ts.transpileModule(readFileSync(new URL('../components/story-link-copy.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020,jsx:ts.JsxEmit.ReactJSX}}).outputText,{exports,navigator:{clipboard},require:n=>n==='react'?react:require(n)});
+  const url=api.storyUrl(story.slug);const render=()=>{index=0;return exports.default({url});};render().props.children[0].props.onClick();await new Promise(resolve=>setImmediate(resolve));return {view:render(),url};
+ }
+ let copied;let result=await fixture({writeText:async url=>{copied=url;}});assert.equal(copied,result.url);assert.match(result.view.props.children[2].props.children,/ბმული დაკოპირებულია/);
+ result=await fixture({writeText:async()=>{throw Error('Permission denied');}});assert.equal(result.view.props.children[1].props.value,result.url);assert.equal(result.view.props.children[1].props.readOnly,true);assert.match(result.view.props.children[2].props.children,/დააკოპირეთ/);
 });
