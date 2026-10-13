@@ -1,12 +1,13 @@
 "use client";
-import {useId,useState} from 'react';
+import {useId} from 'react';
+import useSmoothPage from './use-smooth-page';
 import type {Item} from '@/lib/types';
 import {ProductCard} from './site';
 import DirectionIcon from './direction-icon';
 import usePageSwipe from './use-page-swipe';
 import useCardPageSize from './use-card-page-size';
 export default function HomeProducts({items,furniture=false}:{items:Item[];furniture?:boolean}){
- const [page,setPage]=useState(0);
+ const {page,previousPage,move:setPage,motion}=useSmoothPage();
  const responsiveSize=useCardPageSize();
  const pageSize=responsiveSize||Math.max(items.length,1);
  const id=useId();
@@ -18,7 +19,10 @@ export default function HomeProducts({items,furniture=false}:{items:Item[];furni
  return <div className="home-product-pager" role="region" aria-label={label}>
   <div className={'product-pager-frame'+(pages>1?' has-pages':'')}>
    {pages>1&&<button type="button" className="product-page-arrow" aria-label={label+' — წინა გვერდი'} aria-controls={id} disabled={current===0} onClick={()=>setPage((current-1)*pageSize)}><DirectionIcon direction="left" size={23}/></button>}
-   <div {...(responsiveSize?swipe:{})} tabIndex={0} aria-label={label+' — გადასართავად გაუსვით თითი'} onKeyDown={event=>{if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();setPage(Math.max(0,Math.min(pages-1,current+(event.key==='ArrowRight'?1:-1)))*pageSize);}}} id={id} key={pageSize+':'+current} className="product-grid product-page-enter">{visible.map(item=><ProductCard key={item.id} item={item} furniture={furniture}/>)}</div>
+   <div className={"catalog-slide-window "+motion}>
+   {previousPage!==null&&responsiveSize>0&&<div className="product-grid catalog-slide-out" aria-hidden="true" inert>{items.slice(Math.floor(previousPage/pageSize)*pageSize,(Math.floor(previousPage/pageSize)+1)*pageSize).map(item=><ProductCard key={item.id} item={item} furniture={furniture}/>)}</div>}
+   <div {...(responsiveSize?swipe:{})} tabIndex={0} aria-label={label+' — გადასართავად გაუსვით თითი'} onKeyDown={event=>{if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();setPage(Math.max(0,Math.min(pages-1,current+(event.key==='ArrowRight'?1:-1)))*pageSize);}}} id={id} key={pageSize+':'+current} className={"product-grid"+(motion?" catalog-slide-in":"")}>{visible.map(item=><ProductCard key={item.id} item={item} furniture={furniture}/>)}</div>
+   </div>
    {pages>1&&<button type="button" className="product-page-arrow" aria-label={label+' — შემდეგი გვერდი'} aria-controls={id} disabled={current===pages-1} onClick={()=>setPage((current+1)*pageSize)}><DirectionIcon size={23}/></button>}
   </div>
  </div>;

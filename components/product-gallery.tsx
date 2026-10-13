@@ -20,7 +20,7 @@ export default function ProductGallery({item}:{item:Item}){
  if(!images.length)return <div className="detail-image detail-image-empty">ფოტო მალე დაემატება</div>;
  return <div className="product-gallery">
   <button type="button" className="detail-image detail-image-trigger" ref={trigger} onPointerDown={()=>{pointerOpen.current=true}} onKeyDown={()=>{pointerOpen.current=false}} onClick={()=>setOpen(true)} aria-label={item.name+' — ფოტოს გადიდება'}>
-   <ResponsiveImage src={active} alt={item.name} sizes="(max-width:767px) 100vw, 50vw" fetchPriority="high"/><span className="image-expand"><Expand size={17}/>გადიდება</span>
+   <ResponsiveImage key={active} src={active} alt={item.name} sizes="(max-width:767px) 100vw, 50vw" fetchPriority="high"/><span className="image-expand"><Expand size={17}/>გადიდება</span>
   </button>
   {isIllustrativeImage(active)&&<p className="photo-note">ფოტო საილუსტრაციოა.</p>}
   {images.length>1&&<div className="gallery" aria-label="პროდუქტის ფოტოები">{images.map((image,i)=><button type="button" key={image} onClick={()=>setIndex(i)} aria-label={'ფოტო '+(i+1)} aria-pressed={index===i}><ResponsiveImage src={image} alt="" sizes="80px" loading="lazy"/></button>)}</div>}

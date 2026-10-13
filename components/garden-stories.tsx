@@ -1,5 +1,6 @@
 "use client";
 import {useEffect,useRef,useState,useSyncExternalStore} from 'react';
+import useSmoothPage from './use-smooth-page';
 import DirectionIcon from './direction-icon';
 import type {GardenStory} from '@/lib/types';
 import ResponsiveImage from './responsive-image';
@@ -9,23 +10,23 @@ function subscribeReducedMotion(callback:()=>void){const media=window.matchMedia
 const reducedMotion=()=>window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const serverReducedMotion=()=>false;
 export default function GardenStories({stories,overview=false}:{stories:GardenStory[];overview?:boolean}) {
- const [index,setIndex]=useState(0);
+ const {page:index,previousPage,move:setIndex,motion}=useSmoothPage();
  const paused=useSyncExternalStore(subscribeReducedMotion,reducedMotion,serverReducedMotion);
  const [hovered,setHovered]=useState(false);
  const [focused,setFocused]=useState(false);
  const touch=useRef<{x:number;y:number}|null>(null);
  const slides=stories.slice(0,4);
  const count=slides.length;
- const active=count?index%count:0;
+ const active=count?((index%count)+count)%count:0;
  useEffect(()=>{
   if(count<2||paused||hovered||focused)return;
-  const timer=window.setTimeout(()=>setIndex(i=>(i+1)%count),6000);
+  const timer=window.setTimeout(()=>setIndex(index+1),6000);
   return()=>window.clearTimeout(timer);
  },[count,paused,hovered,focused,index]);
- function move(step:number){setIndex(i=>(i+step+count)%count)}
+ function move(step:number){setIndex(index+step)}
  if(!count)return <div className="empty">საბაღე ამბები მალე დაემატება.</div>;
  const sideStories=stories.slice(0,2);
- return <><div className={"story-grid"+(overview?" story-home-overview":"")}>
+ return <><div className={overview?"story-grid story-home-overview":"story-list-feature"}>
   <div className="story-carousel" role="region" aria-roledescription="კარუსელი" aria-label="საბაღე ამბები"
    onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)}
    onFocusCapture={()=>setFocused(true)} onBlurCapture={e=>{if(!e.currentTarget.contains(e.relatedTarget))setFocused(false)}}
@@ -33,8 +34,8 @@ export default function GardenStories({stories,overview=false}:{stories:GardenSt
    onTouchStart={e=>{const point=e.touches[0];touch.current={x:point.clientX,y:point.clientY}}}
    onTouchCancel={()=>{touch.current=null}}
    onTouchEnd={e=>{const start=touch.current;touch.current=null;if(!start||count<2)return;const point=e.changedTouches[0];const dx=point.clientX-start.x,dy=point.clientY-start.y;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy))move(dx<0?1:-1)}}>
-   <div className="story-slides" aria-live={paused?'polite':'off'}>
-    {slides.filter((_,i)=>i===active||i===(active+1)%count).map(story=><a key={story.id} href={'/garden-stories/'+story.slug} className="story-card story-featured" hidden={story.id!==slides[active].id} aria-label={story.title}>
+   <div className={"story-slides "+motion} aria-live={paused?'polite':'off'}>
+    {slides.map((story,i)=><a key={story.id} href={'/garden-stories/'+story.slug} className={"story-card story-featured story-slide"+(i===active?" is-active"+(motion?" catalog-slide-in":""):previousPage!==null&&i===((previousPage%count)+count)%count?" catalog-slide-out":"")} aria-hidden={i!==active} inert={i!==active} tabIndex={i===active?0:-1} aria-label={story.title}>
      <ResponsiveImage src={story.image_url} alt={story.title} sizes="(max-width:767px) 100vw, 50vw" loading="eager" fetchPriority={story.id===slides[active].id?'high':'low'}/>
      <div className="story-caption"><div className="story-caption-copy"><StoryDate value={story.created_at}/><h3>{story.title}</h3><p>{story.excerpt}</p></div><span className="text-link">წაიკითხე</span></div>
     </a>)}
@@ -44,6 +45,6 @@ export default function GardenStories({stories,overview=false}:{stories:GardenSt
     <button type="button" className="carousel-arrow next" aria-label="შემდეგი ამბავი" onClick={()=>move(1)}><DirectionIcon size={23}/></button>
    </>}
   </div>
-  {sideStories.map(story=><GardenStoryCard key={story.id} story={story}/>)}
- </div>{!overview&&stories.length>2&&<div className="story-grid story-more-grid">{stories.slice(2).map(story=><GardenStoryCard key={story.id} story={story}/>)}</div>}</>;
+  {overview&&sideStories.map(story=><GardenStoryCard key={story.id} story={story}/>)}
+ </div>{!overview&&stories.length>0&&<div className="story-grid story-more-grid">{stories.map(story=><GardenStoryCard key={story.id} story={story}/>)}</div>}</>;
 }
