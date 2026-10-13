@@ -1,6 +1,6 @@
 import {supabase} from './supabase';
 import {facebookVideoUrl} from './video-source';
-import {fetchFacebookCover} from './facebook-cover-client';
+import {fetchFacebookCover,fetchPersistentFacebookCover} from './facebook-cover-client';
 const uploads=new Map<string,Promise<string>>();
 const repairs=new Map<string,Promise<{id:string;video_url:string;thumbnail_url:string}|null>>();
 /** Uploads use the signed-in administrator's client and existing Storage policies. */
@@ -26,10 +26,7 @@ export function repairFacebookCover(row:{id:string;video_url:string;thumbnail_ur
  if(!supabase||row.thumbnail_url?.trim()||!facebookVideoUrl(row.video_url))return Promise.resolve(null);
  const pending=repairs.get(row.id);if(pending)return pending;
  const work=(async()=>{
-  const cover=await uploadFacebookCover(row.video_url);
-  let update=supabase!.from('videos').update({thumbnail_url:cover}).eq('id',row.id).eq('video_url',row.video_url);
-  update=row.thumbnail_url===null?update.is('thumbnail_url',null):update.eq('thumbnail_url',row.thumbnail_url??'');
-  const {data,error}=await update.select('id,video_url,thumbnail_url').maybeSingle();if(error)throw error;
-  return data as {id:string;video_url:string;thumbnail_url:string}|null;
+  const cover=await fetchPersistentFacebookCover(row.video_url,row.id,AbortSignal.timeout(45000));
+  return {id:row.id,video_url:row.video_url,thumbnail_url:cover};
  })().finally(()=>repairs.delete(row.id));repairs.set(row.id,work);return work;
 }
