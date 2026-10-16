@@ -1,6 +1,7 @@
 import StructuredData from '@/components/structured-data';
 import {businessData,websiteData} from '@/lib/seo';
 import {pageMetadata} from '@/lib/seo';
+import {GardenListBanner} from '@/components/garden-list';
 import HomeProducts from '@/components/home-products';
 import GardenStories from '@/components/garden-stories';
 import {catalog} from '@/lib/catalog';
@@ -19,7 +20,8 @@ export default async function Home(){
   */}
   <section className="container section home-section garden-stories-section"><SectionHeader title="საბაღე ამბები" link="/garden-stories" label="ყველა ამბავი"/><GardenStories stories={d.garden_stories} overview/></section>
   <section className="container section home-section"><SectionHeader title="მცენარეები" link="/plants" label="ყველა მცენარე"/>{plants.length?<HomeProducts items={plants}/>:<div className="empty">მცენარეები მალე დაემატება.</div>}</section>
-  <section className="container section home-section videos-section"><SectionHeader title="ჩვენი ვიდეოები" link="/videos" label="ყველა ვიდეო"/><Videos videos={d.videos} advertisement={d.advertisement} featured/></section>
+  <div className="container"><GardenListBanner/></div>
+  <section className="container section home-section videos-section"><SectionHeader title="სიახლეები კადრში" link="/videos" label="ყველა ვიდეო"/><Videos videos={d.videos} advertisement={d.advertisement} featured/></section>
   <section className="container section home-section"><SectionHeader title="ეზოს ავეჯი" link="/furniture" label="ყველა ეზოს ავეჯი"/>{furniture.length?<HomeProducts items={furniture} furniture/>:<div className="empty">ეზოს ავეჯის მიმდინარე არჩევანი დააზუსტეთ ჩვენთან: {d.settings.phone}.</div>}</section>
   <section className="section home-section services-section"><div className="container"><SectionHeader title="ჩვენი სერვისები" link="/services" label="ყველა სერვისი"/><div className="service-grid">{d.services.map(s=><ServiceCard key={s.id} service={s}/>)}</div></div></section>
   <div className="home-contact"><LocationSection settings={d.settings} title="კონტაქტი"/></div>
