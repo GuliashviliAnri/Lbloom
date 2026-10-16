@@ -34,7 +34,7 @@ export function Header({settings:s}:{settings:Settings}){
   <div className="container header">
    <a href="/" className="brand"><img src="/logo-mark.webp" alt="LBLOOM ლოგო"/><span><b>LBLOOM</b><small>საბაღე ცენტრი</small></span></a>
    <nav aria-label="მთავარი ნავიგაცია">{nav.map(([name,href])=><a href={href} key={href} aria-current={isActive(href)?'page':undefined}>{name}</a>)}</nav>
-   <GardenListLink/><div className="header-contact"><a href={'tel:'+s.phone.replaceAll(' ','')}><Phone size={16}/>{s.phone}</a><small><Clock size={13}/>{s.working_hours}</small></div>
+   <GardenListLink/>
    <button type="button" ref={menuButton} className={'menu-button'+(open?' is-open':'')} onClick={()=>setOpen(!open)} aria-label={open?'მენიუს დახურვა':'მენიუს გახსნა'} aria-expanded={open} aria-controls={menuId}>{open?<X size={21}/>:<Menu size={21}/>}</button>
   </div>
   <div className={'mobile-nav-wrap'+(open?' is-open':'')} aria-hidden={!open} inert={!open}>
