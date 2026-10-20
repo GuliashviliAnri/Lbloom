@@ -1,6 +1,7 @@
 export const richTextMarker='<!--lbloom-rich-text-->';
+export const richTextSizes=Array.from({length:63},(_,index)=>index+10);
 export function escapeText(text:string){return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
-const allowed=new Set(['p','div','br','strong','b','em','i','u','h2','h3','ul','ol','li','blockquote','a']);
+const allowed=new Set(['p','div','br','strong','b','em','i','u','h2','h3','ul','ol','li','blockquote','a','span']);
 // Only our small formatting vocabulary survives; attributes are rebuilt from scratch.
 export function sanitizeRichHtml(html:string){
  return html.replace(/<!--[\s\S]*?-->/g,'').split(/(<[^>]*>)/g).map(token=>{
@@ -8,6 +9,11 @@ export function sanitizeRichHtml(html:string){
   const tag=token.match(/^<\s*(\/?)\s*([a-z0-9]+)\b[^>]*>$/i);if(!tag)return escapeText(token);
   const name=tag[2].toLowerCase();if(!allowed.has(name))return '';
   if(tag[1])return name==='br'?'':`</${name}>`;
+  if(name==='span'){
+   const style=token.match(/\sstyle\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i);
+   const size=(style?.[1]??style?.[2]??style?.[3]??'').match(/^\s*font-size\s*:\s*(\d{2})px\s*;?\s*$/i);
+   return size&&richTextSizes.includes(Number(size[1]))?`<span style="font-size:${Number(size[1])}px">`:'<span>';
+  }
   if(name!=='a')return `<${name}>`;
   const href=token.match(/\shref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i);
   const url=(href?.[1]??href?.[2]??href?.[3]??'').replace(/&amp;/g,'&');

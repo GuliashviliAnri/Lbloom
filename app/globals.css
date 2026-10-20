@@ -360,7 +360,7 @@ footer .brand small { display: none; }
   .header { min-height: 72px; gap: 12px; }
   .brand img { width: 44px; height: 44px; }
   .header-contact { display: none; }
-  .menu-button { margin-left: auto; }
+  .menu-button { margin-left: 0; }
   .section { padding-block: 18px; }
   .section-heading { gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
   .section-heading h2 { font-size: 21px; }
