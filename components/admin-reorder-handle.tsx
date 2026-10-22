@@ -3,11 +3,13 @@ import {useEffect,useRef,useState,type PointerEvent,type KeyboardEvent} from 're
 import {GripVertical} from 'lucide-react';
 import {moveCatalogItem,sameCatalogOrder} from '@/lib/catalog-order';
 type Slot={id:string;node:HTMLElement;top:number;height:number};
-type Drag<T>={before:T[];current:T[];slots:Slot[];lookup:Map<string,Slot>;lastCenter:number|null;card:HTMLElement;ghost:HTMLElement;root:HTMLElement;handle:HTMLButtonElement;pointerId:number;x:number;y:number;startX:number;grabY:number;rect:DOMRect;targetTop:number;frame:number;reduced:boolean};
+type Drag<T>={before:T[];current:T[];slots:Slot[];lookup:Map<string,Slot>;lastCenter:number|null;card:HTMLElement;ghost:HTMLElement;root:HTMLElement;handle:HTMLButtonElement;pointerId:number;x:number;y:number;startX:number;grabY:number;rect:DOMRect;targetTop:number;frame:number;reduced:boolean;detach:()=>void};
+type PointerPosition={pointerId:number;clientX:number;clientY:number};
 export default function AdminReorderHandle<T extends {id?:unknown}>({id,title,rows,onChange,onSave,disabled=false}:{id:string;title:string;rows:T[];onChange:(rows:T[])=>void;onSave:(next:T[],before:T[])=>void;disabled?:boolean}){
  const [active,setActive]=useState(false);
  const drag=useRef<Drag<T>|null>(null);const cleanup=useRef<(()=>void)|null>(null);
  useEffect(()=>()=>cleanup.current?.(),[]);
+ useEffect(()=>{if(disabled)finish(true)},[disabled]);
  function paint(state:Drag<T>){
   const dx=Math.max(-24,Math.min(24,state.x-state.startX));const dy=state.y-state.grabY-state.rect.top;
   state.ghost.style.transform=`translate3d(${dx}px,${dy}px,0) scale(${state.reduced?1:1.015})`;
@@ -26,34 +28,36 @@ export default function AdminReorderHandle<T extends {id?:unknown}>({id,title,ro
   paint(state);state.frame=window.requestAnimationFrame(()=>tick(state));
  }
  function start(event:PointerEvent<HTMLButtonElement>){
-  if(disabled||event.button!==0)return;
+  if(disabled||event.button!==0||drag.current)return;
   const root=event.currentTarget.closest<HTMLElement>('.admin-list');const card=event.currentTarget.closest<HTMLElement>('[data-order-id]');if(!root||!card||root.dataset.reorderActive)return;
   const slots=Array.from(root.querySelectorAll<HTMLElement>('[data-order-id]')).map(node=>{const box=node.getBoundingClientRect();return {id:node.dataset.orderId!,node,top:box.top+window.scrollY,height:box.height};});
   if(slots.length!==rows.length)return;
-  event.preventDefault();event.currentTarget.focus({preventScroll:true});event.currentTarget.setPointerCapture(event.pointerId);
+  event.preventDefault();event.currentTarget.focus({preventScroll:true});
+  try{event.currentTarget.setPointerCapture(event.pointerId)}catch{return;}
   const rect=card.getBoundingClientRect();const ghost=card.cloneNode(true) as HTMLElement;
   ghost.removeAttribute('data-order-id');ghost.setAttribute('aria-hidden','true');ghost.inert=true;ghost.classList.add('admin','admin-drag-ghost');
   ghost.style.width=rect.width+'px';ghost.style.height=rect.height+'px';ghost.style.left=rect.left+'px';ghost.style.top=rect.top+'px';document.body.appendChild(ghost);
   root.dataset.reorderActive='true';document.documentElement?.classList.add('admin-sorting');for(const slot of slots)slot.node.classList.add('admin-reorder-slot');card.classList.add('admin-drag-placeholder');
   const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const state:Drag<T>={before:rows,current:rows,slots,lookup:new Map(slots.map(slot=>[slot.id,slot])),lastCenter:null,card,ghost,root,handle:event.currentTarget,pointerId:event.pointerId,x:event.clientX,y:event.clientY,startX:event.clientX,grabY:event.clientY-rect.top,rect,targetTop:rect.top+window.scrollY,frame:0,reduced};
-  cleanup.current=()=>{window.cancelAnimationFrame(state.frame);ghost.remove();delete root.dataset.reorderActive;document.documentElement?.classList.remove('admin-sorting');for(const slot of slots){slot.node.classList.remove('admin-reorder-slot','admin-drag-placeholder');slot.node.style.removeProperty('transform');slot.node.style.removeProperty('transition');}cleanup.current=null;};
+  const state:Drag<T>={before:rows,current:rows,slots,lookup:new Map(slots.map(slot=>[slot.id,slot])),lastCenter:null,card,ghost,root,handle:event.currentTarget,pointerId:event.pointerId,x:event.clientX,y:event.clientY,startX:event.clientX,grabY:event.clientY-rect.top,rect,targetTop:rect.top+window.scrollY,frame:0,reduced,detach:()=>{}};
+  const pointerMove=(e:globalThis.PointerEvent)=>{if(e.pointerId!==state.pointerId)return;if(e.pointerType==='mouse'&&e.buttons===0){finish(false,e);return;}e.preventDefault();state.x=e.clientX;state.y=e.clientY;};
+  const pointerUp=(e:globalThis.PointerEvent)=>{if(e.pointerId===state.pointerId)finish(false,e)};
+  const pointerCancel=(e:globalThis.PointerEvent)=>{if(e.pointerId===state.pointerId)finish(true)};
+  const cancel=()=>finish(true);
+  const visibility=()=>{if(document.visibilityState==='hidden')cancel()};
+  const escape=(e:globalThis.KeyboardEvent)=>{if(e.key==='Escape'){e.preventDefault();cancel()}};
+  window.addEventListener('pointermove',pointerMove,{capture:true,passive:false});window.addEventListener('pointerup',pointerUp,true);window.addEventListener('pointercancel',pointerCancel,true);window.addEventListener('blur',cancel);window.addEventListener('keydown',escape,true);state.handle.addEventListener('lostpointercapture',cancel);document.addEventListener('visibilitychange',visibility);
+  state.detach=()=>{window.removeEventListener('pointermove',pointerMove,true);window.removeEventListener('pointerup',pointerUp,true);window.removeEventListener('pointercancel',pointerCancel,true);window.removeEventListener('blur',cancel);window.removeEventListener('keydown',escape,true);state.handle.removeEventListener('lostpointercapture',cancel);document.removeEventListener('visibilitychange',visibility);};
+  cleanup.current=()=>{if(drag.current===state)drag.current=null;window.cancelAnimationFrame(state.frame);state.detach();ghost.remove();delete root.dataset.reorderActive;document.documentElement?.classList.remove('admin-sorting');for(const slot of slots){slot.node.classList.remove('admin-reorder-slot','admin-drag-placeholder');slot.node.style.removeProperty('transform');slot.node.style.removeProperty('transition');}cleanup.current=null;try{if(state.handle.hasPointerCapture(state.pointerId))state.handle.releasePointerCapture(state.pointerId)}catch{/* The handle may already be detached. */}};
   drag.current=state;setActive(true);paint(state);state.frame=window.requestAnimationFrame(()=>tick(state));
  }
- function move(event:PointerEvent<HTMLButtonElement>){const state=drag.current;if(!state)return;event.preventDefault();state.x=event.clientX;state.y=event.clientY;}
- function finish(cancel=false,event?:PointerEvent<HTMLButtonElement>){
-  const state=drag.current;if(!state)return;if(event&&!cancel){state.x=event.clientX;state.y=event.clientY;paint(state);}
-  drag.current=null;window.cancelAnimationFrame(state.frame);setActive(false);
-  if(state.handle.hasPointerCapture(state.pointerId))state.handle.releasePointerCapture(state.pointerId);
-  const positions=state.slots.map(slot=>({slot,top:slot.node.getBoundingClientRect().top}));
-  for(const slot of state.slots){slot.node.style.transition='none';slot.node.style.removeProperty('transform');}
+ function move(event:PointerEvent<HTMLButtonElement>){const state=drag.current;if(!state||event.pointerId!==state.pointerId)return;event.preventDefault();state.x=event.clientX;state.y=event.clientY;}
+ function finish(cancel=false,event?:PointerPosition){
+  const state=drag.current;if(!state||event&&event.pointerId!==state.pointerId)return;
+  try{if(event&&!cancel){state.x=event.clientX;state.y=event.clientY;paint(state);}}
+  finally{cleanup.current?.();setActive(false);}
+  // Remove the floating copy before React can disable, reorder or unmount a row.
   if(!cancel&&!sameCatalogOrder(state.current,state.before)){onChange(state.current);onSave(state.current,state.before);}
-  window.requestAnimationFrame(()=>{
-   for(const {slot,top} of positions){const delta=top-slot.node.getBoundingClientRect().top;slot.node.style.removeProperty('transition');if(!state.reduced&&Math.abs(delta)>1)slot.node.animate?.([{transform:`translateY(${delta}px)`},{transform:'translateY(0)'}],{duration:180,easing:'cubic-bezier(.2,.75,.25,1)'});}
-  });
-  const target=(cancel?state.lookup.get(id)!.top:state.targetTop)-window.scrollY-state.rect.top;
-  if(state.ghost.animate&&!state.reduced){const animation=state.ghost.animate([{transform:state.ghost.style.transform,opacity:1},{transform:`translate3d(0,${target}px,0) scale(1)`,opacity:1}],{duration:150,easing:'cubic-bezier(.2,.75,.25,1)',fill:'forwards'});animation.finished.then(()=>cleanup.current?.(),()=>cleanup.current?.());}
-  else cleanup.current?.();
  }
  function keyboard(event:KeyboardEvent<HTMLButtonElement>){
   if(event.key==='Escape'&&drag.current){event.preventDefault();finish(true);return;}
