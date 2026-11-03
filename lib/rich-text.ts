@@ -22,3 +22,24 @@ export function sanitizeRichHtml(html:string){
  }).join('');
 }
 export function richTextHtml(value:string){return value.startsWith(richTextMarker)?sanitizeRichHtml(value.slice(richTextMarker.length)):value.split(/\n\s*\n/).filter(Boolean).map(text=>`<p>${escapeText(text).replace(/\n/g,'<br>')}</p>`).join('')}
+const blockTags=new Set(['p','div','h2','h3','ul','ol','blockquote']);
+/** Splits sanitized story HTML into its top-level blocks (paragraphs, headings, lists). */
+export function richTextBlocks(html:string):string[]{
+ const blocks:string[]=[];let depth=0;let current='';
+ for(const token of html.split(/(<[^>]*>)/g)){
+  if(!token)continue;
+  const tag=token.match(/^<(\/?)([a-z0-9]+)/i);const name=tag?.[2]?.toLowerCase()??'';
+  if(tag&&blockTags.has(name)){if(tag[1])depth=Math.max(0,depth-1);else depth++;}
+  current+=token;
+  if(depth===0&&tag?.[1]&&blockTags.has(name)){blocks.push(current);current='';}
+ }
+ if(current.trim())blocks.push(current);
+ return blocks;
+}
+/** Where the in-article photo goes: after the first half of the text. */
+export function splitStoryBody(html:string):[string,string]{
+ const blocks=richTextBlocks(html);
+ if(blocks.length<2)return [html,''];
+ const half=Math.ceil(blocks.length/2);
+ return [blocks.slice(0,half).join(''),blocks.slice(half).join('')];
+}

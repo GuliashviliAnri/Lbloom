@@ -1570,3 +1570,29 @@ select, .admin-form select, .mobile-category select {
 .admin-orders-link{display:flex;align-items:center;gap:11px;min-height:46px;padding:11px 14px;border-radius:8px;color:inherit;font-size:14px;line-height:1.6}.admin-orders-link:hover,.admin-orders-link.is-active{background:#e4ecd9;color:#385e30}
 .orders-admin-main .request-stat-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.orders-admin-main .request-stat-grid>button{display:flex;flex-direction:column;align-items:flex-start;border:1px solid #d5ddc7;background:#faf8ee;border-radius:10px;padding:18px 20px;text-align:left}.orders-admin-main .request-stat-grid>button[aria-pressed=true]{border-color:#729552;background:#eaf0de}.orders-search{display:flex;align-items:center;gap:10px;max-width:600px;border:1px solid #cad5b7;background:#fffdf3;border-radius:8px;padding:12px 15px;margin-bottom:23px;color:#7a8f66}.orders-search input{border:0;background:none;width:100%;min-width:0;font-size:15px;outline:none}.orders-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:380px;border:1px dashed #c4d2af;border-radius:12px;text-align:center;padding:30px;color:#728c5b;background:#f9f8ec}.orders-empty h2{font-size:22px;margin:18px 0 8px}.orders-empty p{font-size:14px;max-width:40ch}.orders-empty .button{font-size:14px;border-radius:8px}.order-status-updating .request-detail-header select{pointer-events:none;opacity:.5}
 @media(max-width:700px){.orders-admin-main .request-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.orders-admin-main .request-stat-grid>button{padding:14px}.orders-admin-main .request-admin-layout{grid-template-columns:1fr}.orders-search input{font-size:14px}.orders-empty{min-height:300px}}
+
+/* Plant sizes: each size has its own price */
+.product-sizes {margin:18px 0 6px;padding:0;border:0;}
+.product-sizes legend {margin-bottom:10px;font-size:14px;color:var(--muted);}
+.product-size-options {display:flex;flex-wrap:wrap;gap:10px;}
+.product-size-options button {display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:112px;min-height:58px;padding:9px 14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);color:inherit;text-align:left;cursor:pointer;transition:border-color .15s,box-shadow .15s;}
+.product-size-options button strong {font-size:15px;font-weight:600;}
+.product-size-options button .item-price {font-size:14px;color:var(--muted);}
+.product-size-options button .item-price del {font-size:12px;}
+.product-size-options button:hover {border-color:var(--line-strong);}
+.product-size-options button.is-active {border-color:var(--green);box-shadow:inset 0 0 0 1px var(--green);}
+.product-size-options button.is-active .item-price {color:var(--green);}
+.product-size-options button:focus-visible {outline:2px solid var(--green);outline-offset:2px;}
+.price-from {margin-left:3px;font-size:.8em;font-weight:500;}
+.garden-selected-size {display:block;margin:2px 0 4px;color:var(--muted);font-size:13px;}
+.admin-variants {display:flex;flex-direction:column;gap:12px;}
+.admin-variants-title {font-weight:600;}
+.admin-variant-list {display:flex;flex-direction:column;gap:12px;}
+.admin-variant-row {display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr) 44px;gap:12px;align-items:end;padding:12px;border:1px solid var(--line);border-radius:var(--radius);}
+.admin-variant-row .admin-delete-button {height:44px;}
+.admin-variant-add {align-self:flex-start;}
+@media (max-width:640px){.admin-variant-row {grid-template-columns:minmax(0,1fr) minmax(0,1fr);}.admin-variant-row label:first-child {grid-column:1 / -1;}}
+
+/* Second photo placed inside the story text */
+.story-inline-photo {clear:both;margin:28px 0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface);}
+.story-inline-photo img {display:block;width:100%;height:auto;max-height:560px;object-fit:cover;}

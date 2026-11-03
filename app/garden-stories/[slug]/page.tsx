@@ -1,4 +1,4 @@
-import {richTextHtml} from '@/lib/rich-text';
+import {richTextHtml,splitStoryBody} from '@/lib/rich-text';
 import StoryViews from '@/components/story-views';
 import StructuredData from '@/components/structured-data';
 import {articleData,breadcrumbData} from '@/lib/seo';
@@ -22,7 +22,7 @@ export default async function Page({params}:{params:Promise<{slug:string}>}){
   <div className="story-detail-layout">
    <figure className="story-detail-photo"><ResponsiveImage src={story.image_url} alt={story.title} sizes="(max-width:767px) 100vw, 50vw" fetchPriority="high"/></figure>
    <header className="story-detail-heading"><span className="story-label">საბაღე ამბები</span><div className="story-detail-meta"><StoryDate value={story.created_at}/><StoryViews storyId={story.id} record/></div><h1>{story.title}</h1>{story.excerpt&&<p className="story-intro">{story.excerpt}</p>}</header>
-   <div className="story-body"><div className="rich-content" dangerouslySetInnerHTML={{__html:richTextHtml(story.body)}}/><a className="story-back-link" href="/garden-stories"><DirectionIcon direction="left" size={17}/>ყველა საბაღე ამბავი</a></div>
+   <div className="story-body">{story.body_image_url?(()=>{const [first,rest]=splitStoryBody(richTextHtml(story.body));return <><div className="rich-content" dangerouslySetInnerHTML={{__html:first}}/><figure className="story-inline-photo"><ResponsiveImage src={story.body_image_url} alt={story.title} sizes="(max-width:767px) 100vw, 720px" loading="lazy"/></figure>{rest&&<div className="rich-content" dangerouslySetInnerHTML={{__html:rest}}/>}</>})():<div className="rich-content" dangerouslySetInnerHTML={{__html:richTextHtml(story.body)}}/>}<a className="story-back-link" href="/garden-stories"><DirectionIcon direction="left" size={17}/>ყველა საბაღე ამბავი</a></div>
   </div>
   <StoryShare slug={story.slug}/>
  </article></Shell>;

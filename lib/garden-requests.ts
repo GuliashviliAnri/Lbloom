@@ -1,11 +1,15 @@
 import type {GardenEntry,GardenProduct} from './garden-list';
 import {gardenPrice} from './garden-list';
+import {findVariant,itemVariants} from './variants';
 export type RequestStatus='new'|'agreed'|'done';
 export const requestStatuses:Record<RequestStatus,string>={new:'ახალი',agreed:'შეთანხმებულია',done:'დასრულებულია'};
 export type RequestContact={name:string;phone:string;delivery:'delivery'|'pickup';city:string;address:string;planting:boolean};
-export type RequestLine={id:string;kind:'plant'|'furniture';name:string;slug:string;image:string;quantity:number;price:number|null};
+export type RequestLine={id:string;kind:'plant'|'furniture';name:string;size?:string;slug:string;image:string;quantity:number;price:number|null};
 export type GardenRequest={id:string;number:string;createdAt:string;title:string;note:string;contact:RequestContact;lines:RequestLine[];total:number;unknown:number;status:RequestStatus;fingerprint:string;sample?:boolean};
 export function normalizePhone(value:string){const digits=value.replace(/\D/g,'');return /^5\d{8}$/.test(digits)?'+995'+digits:/^9955\d{8}$/.test(digits)?'+'+digits:''}
 export function requestError(contact:RequestContact){if(contact.name.trim().length<2)return 'მიუთითე შენი სახელი.';if(!normalizePhone(contact.phone))return 'მიუთითე ქართული მობილურის ნომერი: 5XX XX XX XX.';if(contact.delivery==='delivery'&&contact.city.trim()&&!['თბილისი','თბილისის შემოგარენი'].includes(contact.city.trim()))return 'მიწოდება ხელმისაწვდომია მხოლოდ თბილისში და მის შემოგარენში.';if(contact.delivery==='delivery'&&(!contact.city.trim()||contact.address.trim().length<5))return 'მიწოდებისთვის აირჩიე ზონა და მიუთითე სრული მისამართი.';return ''}
-export function requestFingerprint(entries:GardenEntry[],contact:RequestContact,title:string,note:string){return JSON.stringify({entries:entries.map(e=>({...e})).sort((a,b)=>(a.kind+a.id).localeCompare(b.kind+b.id)),name:contact.name.trim().toLowerCase(),phone:normalizePhone(contact.phone),delivery:contact.delivery,city:contact.delivery==='delivery'?contact.city.trim().toLowerCase():'',address:contact.delivery==='delivery'?contact.address.trim().toLowerCase():'',planting:contact.planting,title:title.trim(),note:note.trim()})}
-export function requestLines(entries:GardenEntry[],products:GardenProduct[]):RequestLine[]{return entries.flatMap(entry=>{const p=products.find(p=>p.item.id===entry.id&&p.kind===entry.kind);return p?[{id:p.item.id,kind:p.kind,name:p.item.name,slug:p.item.slug,image:p.item.image_url,quantity:entry.quantity,price:gardenPrice(p.item)}]:[]})}
+export function requestFingerprint(entries:GardenEntry[],contact:RequestContact,title:string,note:string){return JSON.stringify({entries:entries.map(e=>({...e})).sort((a,b)=>(a.kind+a.id+(a.size??'')).localeCompare(b.kind+b.id+(b.size??''))),name:contact.name.trim().toLowerCase(),phone:normalizePhone(contact.phone),delivery:contact.delivery,city:contact.delivery==='delivery'?contact.city.trim().toLowerCase():'',address:contact.delivery==='delivery'?contact.address.trim().toLowerCase():'',planting:contact.planting,title:title.trim(),note:note.trim()})}
+export function requestLines(entries:GardenEntry[],products:GardenProduct[]):RequestLine[]{return entries.flatMap(entry=>{const p=products.find(p=>p.item.id===entry.id&&p.kind===entry.kind);if(!p)return [];const sized=itemVariants(p.item).length>0;
+ // A product with sizes needs a size that still exists; otherwise the line is rejected.
+ if(sized&&!findVariant(p.item,entry.size))return [];
+ return [{id:p.item.id,kind:p.kind,name:p.item.name+(sized?' · '+entry.size:''),...(sized?{size:entry.size}:{}),slug:p.item.slug,image:p.item.image_url,quantity:entry.quantity,price:gardenPrice(p.item,entry.size)}]})}
