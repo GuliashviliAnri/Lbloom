@@ -1,0 +1,31 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	// Must match the Worker name used by Workers Builds.
+	"name": "lbloom-garden-center",
+	"main": ".open-next/worker.js",
+	"compatibility_date": "2026-11-04",
+	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	// Files in public/ and Next.js static chunks are served as assets, without running the Worker.
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS"
+	},
+	"services": [
+		// Lets the Worker revalidate its own ISR pages in the background.
+		{ "binding": "WORKER_SELF_REFERENCE", "service": "lbloom-garden-center" }
+	],
+	"kv_namespaces": [
+		// ISR page and data cache (Workers KV, included in the Free plan).
+		{ "binding": "NEXT_INC_CACHE_KV", "id": "eb050e19b49848e7a0c3c5408ef70d55" }
+	],
+	"d1_databases": [
+		{
+			"binding": "NEXT_TAG_CACHE_D1",
+			"database_name": "lbloom-garden-center-opennext-tags",
+			"database_id": "11674702-1215-4161-8dbe-564fd953038e"
+		}
+	],
+	// Kept from the existing Worker configuration (used by /_next/image).
+	"images": { "binding": "IMAGES" },
+	"observability": { "enabled": true }
+}

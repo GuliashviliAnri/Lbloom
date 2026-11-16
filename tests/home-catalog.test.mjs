@@ -26,7 +26,7 @@ test('four or fewer products need no page controls',()=>{
 test('catalog includes every product and applies manual order before newest-first ties',async()=>{
  const calls=[];const data={products:Array.from({length:9},(_,i)=>({id:String(i),is_featured:false})),furniture:[],services:[],videos:[],garden_stories:[],site_settings:{id:1},advertisements:null};
  const db={from(table){const query={then(resolve){return Promise.resolve({data:data[table],error:null}).then(resolve)}};for(const method of ['select','order','eq','limit','returns','single','maybeSingle'])query[method]=(...args)=>{calls.push([table,method,...args]);return query};return query}};
- const api=compile('../lib/catalog.ts',{'@supabase/supabase-js':{createClient:()=>db},'./supabase-config':{supabaseUrl:'https://example.com',supabasePublishableKey:'public'},'./data':{settings:{}},'./advertisement':{advertisementFromResult:()=>null}});
+ const api=compile('../lib/catalog.ts',{'@supabase/supabase-js':{createClient:()=>db},'./supabase-config':{supabaseUrl:'https://example.com',supabasePublishableKey:'public'},'./data':{settings:{}},'./advertisement':{advertisementFromResult:()=>null},'next/cache':{unstable_cache:fn=>fn},'./catalog-tags':compile('../lib/catalog-tags.ts',{})});
  const result=await api.catalog('home');assert.equal(result.products.length,9);
  assert.equal(calls.some(c=>c[0]==='products'&&c[1]==='eq'&&c[2]==='is_featured'),false);
  assert.equal(calls.some(c=>c[0]==='products'&&c[1]==='limit'),false);
