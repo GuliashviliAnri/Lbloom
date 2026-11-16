@@ -22,11 +22,11 @@ test('admin tables expire the matching public sections, and categories expire bo
  assert.equal(tags.isAdminTable('products'),true);
 });
 
-test('public pages are cached with ISR while admin, my-garden and API routes stay dynamic',()=>{
- const cached=['app/page.tsx','app/plants/page.tsx','app/plants/[slug]/page.tsx','app/furniture/page.tsx','app/furniture/[slug]/page.tsx','app/services/page.tsx','app/services/[slug]/page.tsx','app/garden-stories/page.tsx','app/garden-stories/[slug]/page.tsx','app/videos/page.tsx','app/contact/page.tsx','app/location/page.tsx','app/sitemap.ts'];
+test('public pages are cached with ISR while API routes stay dynamic',()=>{
+ const cached=['app/page.tsx','app/my-garden/page.tsx','app/plants/page.tsx','app/plants/[slug]/page.tsx','app/furniture/page.tsx','app/furniture/[slug]/page.tsx','app/services/page.tsx','app/services/[slug]/page.tsx','app/garden-stories/page.tsx','app/garden-stories/[slug]/page.tsx','app/videos/page.tsx','app/contact/page.tsx','app/location/page.tsx','app/sitemap.ts'];
  for(const file of cached){const source=read('../'+file);assert.doesNotMatch(source,/force-dynamic/,file);assert.match(source,/export const revalidate=86400;/,file);assert.doesNotMatch(source,/searchParams|cookies\(|headers\(/,file);}
  for(const file of ['app/plants/[slug]/page.tsx','app/furniture/[slug]/page.tsx','app/services/[slug]/page.tsx','app/garden-stories/[slug]/page.tsx'])assert.match(read('../'+file),/generateStaticParams/,file);
- for(const file of ['app/my-garden/page.tsx','app/api/revalidate/route.ts','app/api/story-views/route.ts','app/api/garden-orders/route.ts'])assert.match(read('../'+file),/force-dynamic/,file);
+ for(const file of ['app/api/revalidate/route.ts','app/api/story-views/route.ts','app/api/garden-orders/route.ts'])assert.match(read('../'+file),/force-dynamic/,file);
 });
 
 function revalidateRoute({user='u1',admin=true}={}){
