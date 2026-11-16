@@ -1,5 +1,5 @@
 // Cache tags shared by the public catalog reads and the admin revalidation endpoint.
-export const CATALOG_REVALIDATE_SECONDS=300;
+export const CATALOG_REVALIDATE_SECONDS=86400;
 export const catalogTags=['plants','furniture','services','stories','videos','settings','advertisement'] as const;
 export type CatalogTag=typeof catalogTags[number];
 export type Scope='all'|'home'|'plants'|'furniture'|'services'|'stories'|'videos'|'settings';

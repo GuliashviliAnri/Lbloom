@@ -6,7 +6,7 @@ import {ProductDetail} from '@/components/site';
 import StructuredData from '@/components/structured-data';
 import {relatedProducts} from '@/lib/related-products';
 import {productMetadata,productData,breadcrumbData} from '@/lib/seo';
-export const revalidate=300;
+export const revalidate=86400;
 export async function generateStaticParams(){return staticSlugs(async()=>(await catalog('plants')).products);}
 const load=cache(async(slug:string)=>{const [d,list]=await Promise.all([catalog('plants',slug),catalog('plants')]);const item=d.products.find(p=>p.slug===slug);if(!item)notFound();return {d,list,item};});
 export async function generateMetadata({params}:{params:Promise<{slug:string}>}){const {slug}=await params;const {item}=await load(slug);return productMetadata(item,false);}

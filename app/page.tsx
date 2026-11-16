@@ -6,7 +6,7 @@ import HomeProducts from '@/components/home-products';
 import GardenStories from '@/components/garden-stories';
 import {catalog} from '@/lib/catalog';
 import {Shell,SectionHeader,ServiceCard,Videos,LocationSection} from '@/components/site';
-export const revalidate=300;
+export const revalidate=86400;
 export const metadata=pageMetadata("LBLOOM — საბაღე ცენტრი თბილისში", "LBLOOM — საბაღე ცენტრი თბილისში. მცენარეები, ეზოს ავეჯი და რჩევები თქვენი ეზოსთვის. ნახეთ პროდუქცია, ფასები და დაგვიკავშირდით.", "/");
 
 export default async function Home(){

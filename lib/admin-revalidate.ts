@@ -1,7 +1,7 @@
 import {supabase} from './supabase';
 import type {AdminTable} from './catalog-tags';
 /** Expires the cached public pages that show these tables. The admin save itself already succeeded,
- * so a failure here is only logged; the pages then refresh on their normal 5-minute schedule. */
+ * so a failure here is only logged; the pages then refresh on their normal daily schedule. */
 export async function refreshPublicPages(...tables:AdminTable[]):Promise<void>{
  if(!supabase||!tables.length)return;
  try{

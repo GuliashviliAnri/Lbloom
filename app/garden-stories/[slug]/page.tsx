@@ -13,7 +13,7 @@ import {staticSlugs} from '@/lib/static-slugs';
 import ResponsiveImage from '@/components/responsive-image';
 import StoryDate from '@/components/story-date';
 import {Shell} from '@/components/site';
-export const revalidate=300;
+export const revalidate=86400;
 // The stories scope only returns published stories.
 export async function generateStaticParams(){return staticSlugs(async()=>(await catalog('stories')).garden_stories);}
 const loadStory=cache(async(slug:string)=>{const d=await catalog('stories',slug);const story=d.garden_stories.find(s=>s.slug===slug);if(!story)notFound();return {d,story}});

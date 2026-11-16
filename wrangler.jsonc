@@ -14,8 +14,9 @@
 		// Lets the Worker revalidate its own ISR pages in the background.
 		{ "binding": "WORKER_SELF_REFERENCE", "service": "lbloom-garden-center" }
 	],
-	"r2_buckets": [
-		{ "binding": "NEXT_INC_CACHE_R2_BUCKET", "bucket_name": "lbloom-garden-center-opennext-cache" }
+	"kv_namespaces": [
+		// ISR page and data cache (Workers KV, included in the Free plan).
+		{ "binding": "NEXT_INC_CACHE_KV", "id": "eb050e19b49848e7a0c3c5408ef70d55" }
 	],
 	"d1_databases": [
 		{

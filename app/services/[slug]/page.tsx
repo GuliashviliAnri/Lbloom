@@ -8,7 +8,7 @@ import {notFound} from 'next/navigation';
 import {catalog} from '@/lib/catalog';
 import {staticSlugs} from '@/lib/static-slugs';
 import {Shell,Button,ServiceCard,SectionHeader} from '@/components/site';
-export const revalidate=300;
+export const revalidate=86400;
 export async function generateStaticParams(){return staticSlugs(async()=>(await catalog('services')).services);}
 const load=cache(async(slug:string)=>{const d=await catalog('services');const s=d.services.find(v=>v.slug===slug);if(!s)notFound();return {d,s};});
 export async function generateMetadata({params}:{params:Promise<{slug:string}>}){const {slug}=await params;const {s}=await load(slug);return serviceMetadata(s)}
