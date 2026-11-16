@@ -3,6 +3,7 @@
 import {useCallback,useEffect,useState} from 'react';
 import {LoaderCircle,X,RefreshCw} from 'lucide-react';
 import {supabase} from '@/lib/supabase';
+import {refreshPublicPages} from '@/lib/admin-revalidate';
 import {prepareImage} from '@/lib/prepare-image';
 import {advertisementLink,defaultAdvertisement,type Advertisement} from '@/lib/advertisement';
 import AdvertisementBanner from './advertisement-banner';
@@ -41,6 +42,7 @@ export default function AdminAdvertisement({onStateChange}:{onStateChange?:(stat
   try{const payload={id:1,title:draft.title.trim(),image_url:draft.image_url.trim(),link_url:draft.link_url.trim(),is_active:draft.is_active};
    const {error}=await supabase.from('advertisements').upsert(payload,{onConflict:'id'}).abortSignal(AbortSignal.timeout(12000));
    if(error){setMessage('რეკლამა ვერ შეინახა. გადაამოწმეთ კავშირი და სცადეთ ხელახლა.');return;}
+   await refreshPublicPages('advertisements');
    setDraft(payload);setBaseline(draftFingerprint(payload,editableFields));setMessage('რეკლამა შენახულია. ცვლილება საიტის განახლებისთანავე გამოჩნდება.');
   }catch{setMessage('შენახვა ვერ მოხერხდა. სცადეთ ხელახლა.');}finally{setSaving(false);}
  }

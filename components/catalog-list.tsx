@@ -1,6 +1,5 @@
 "use client";
 import {useEffect,useState} from 'react';
-import {useSearchParams} from 'next/navigation';
 import {Search,X} from 'lucide-react';
 import type {Item,Category} from '@/lib/types';
 import {filterPlants,filterFurniture} from '@/lib/catalog-filter';
@@ -8,18 +7,27 @@ import {plantFilterGroups,resolvePlantGroup} from '@/lib/plant-groups';
 import {furnitureFilterCategories,resolveFurnitureCategory} from '@/lib/furniture-categories';
 import {ProductCard,FurnitureCard} from './site';
 export default function CatalogList({items,categories=[],furniture=false}:{items:Item[];categories?:Category[];furniture?:boolean}) {
- const query=useSearchParams();
- const initial=query.get('category');
- const [category,setCategory]=useState(furniture?resolveFurnitureCategory(initial,categories):resolvePlantGroup(initial,categories));
- const [search,setSearch]=useState(query.get('q')??'');
+ // The page is prerendered without query strings, so the server HTML always holds the full list
+ // and URL filters (?category=, ?q=) are applied after hydration.
+ const [category,setCategory]=useState('all');
+ const [search,setSearch]=useState('');
+ const [urlRead,setUrlRead]=useState(false);
  useEffect(()=>{
+  const query=new URLSearchParams(window.location.search);
+  const initial=query.get('category');
+  setCategory(furniture?resolveFurnitureCategory(initial,categories):resolvePlantGroup(initial,categories));
+  setSearch(query.get('q')??'');
+  setUrlRead(true);
+ },[]);
+ useEffect(()=>{
+  if(!urlRead)return;
   const url=new URL(window.location.href);
   const values={category:category==='all'?'':category,q:search.trim()};
   url.searchParams.delete('sort');
   url.searchParams.delete('stock');
   for(const [key,value] of Object.entries(values)){if(value)url.searchParams.set(key,value);else url.searchParams.delete(key)}
   if(url.toString()!==window.location.href)window.history.replaceState(window.history.state,'',url);
- },[category,search,furniture]);
+ },[category,search,furniture,urlRead]);
  const groups=furniture?furnitureFilterCategories(items,categories):plantFilterGroups(items,categories);
  const allLabel=furniture?'ყველა ეზოს ავეჯი':'ყველა მცენარე';
  const selected=groups.find(c=>c.slug===category);

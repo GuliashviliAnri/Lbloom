@@ -1,11 +1,22 @@
+import {unstable_cache} from 'next/cache';
 import {createClient} from '@supabase/supabase-js';
 import {supabaseUrl,supabasePublishableKey} from './supabase-config';
 import * as seed from './data';
 import {advertisementFromResult,type Advertisement} from './advertisement';
+import {CATALOG_REVALIDATE_SECONDS,scopeTags,type Scope} from './catalog-tags';
 import type {GardenStory,Item,Category,Service,Video,Settings} from './types';
 type Catalog={categories:Category[];products:Item[];furniture:Item[];services:Service[];videos:Video[];settings:Settings;garden_stories:GardenStory[];advertisement:Advertisement|null;connected:boolean;setupRequired?:boolean};
-type Scope='all'|'home'|'plants'|'furniture'|'services'|'stories'|'videos'|'settings';
-export async function catalog(scope:Scope='all',slug?:string):Promise<Catalog>{
+// Public pages share one cached copy per scope/slug; admin changes expire it via /api/revalidate.
+const cachedByScope=new Map<Scope,(slug?:string)=>Promise<Catalog>>();
+export function catalog(scope:Scope='all',slug?:string):Promise<Catalog>{
+ let cached=cachedByScope.get(scope);
+ if(!cached){
+  cached=unstable_cache((s?:string)=>loadCatalog(scope,s),['catalog',scope],{tags:scopeTags(scope),revalidate:CATALOG_REVALIDATE_SECONDS});
+  cachedByScope.set(scope,cached);
+ }
+ return cached(slug);
+}
+async function loadCatalog(scope:Scope,slug?:string):Promise<Catalog>{
  const home=scope==='home';
  const needs=(section:Scope)=>home||scope==='all'||scope===section;
  const skip=()=>Promise.resolve({data:[],error:null});
@@ -36,7 +47,7 @@ export async function catalog(scope:Scope='all',slug?:string):Promise<Catalog>{
   db.from('site_settings').select('*').eq('id',1).single(),stories(),
   home||scope==='all'?db.from('advertisements').select('*').eq('id',1).maybeSingle<Advertisement>():Promise.resolve({data:null,error:null})
  ]);
- // Preserve setup fallback and immediate visibility of admin changes; no stale public cache.
+ // Preserve setup fallback; admin changes reach public pages through tag revalidation.
  if([c,p,f,s,v,t,n].some(x=>x.error&&['PGRST205','42P01'].includes(x.error.code)))return {...seed,connected:false,setupRequired:true};
  if([c,p,f,s,v,t,n].some(x=>x.error))throw new Error('კატალოგი დროებით მიუწვდომელია.');
  const cards=(rows:Item[]|null)=>slug?rows??[]:(rows??[]).map(row=>({...row,gallery_images:[]}));

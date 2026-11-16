@@ -9,10 +9,13 @@ import {storySharingMetadata} from '@/lib/story-sharing';
 import {notFound} from 'next/navigation';
 import DirectionIcon from '@/components/direction-icon';
 import {catalog} from '@/lib/catalog';
+import {staticSlugs} from '@/lib/static-slugs';
 import ResponsiveImage from '@/components/responsive-image';
 import StoryDate from '@/components/story-date';
 import {Shell} from '@/components/site';
-export const dynamic='force-dynamic';
+export const revalidate=300;
+// The stories scope only returns published stories.
+export async function generateStaticParams(){return staticSlugs(async()=>(await catalog('stories')).garden_stories);}
 const loadStory=cache(async(slug:string)=>{const d=await catalog('stories',slug);const story=d.garden_stories.find(s=>s.slug===slug);if(!story)notFound();return {d,story}});
 export async function generateMetadata({params}:{params:Promise<{slug:string}>}){const {slug}=await params;const {story}=await loadStory(slug);return storySharingMetadata(story)}
 export default async function Page({params}:{params:Promise<{slug:string}>}){
