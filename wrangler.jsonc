@@ -1,7 +1,7 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	// Must match the Worker name used by Workers Builds.
-	"name": "lbloom",
+	"name": "lbloom-garden-center",
 	"main": ".open-next/worker.js",
 	"compatibility_date": "2026-11-01",
 	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
@@ -12,15 +12,15 @@
 	},
 	"services": [
 		// Lets the Worker revalidate its own ISR pages in the background.
-		{ "binding": "WORKER_SELF_REFERENCE", "service": "lbloom" }
+		{ "binding": "WORKER_SELF_REFERENCE", "service": "lbloom-garden-center" }
 	],
 	"r2_buckets": [
-		{ "binding": "NEXT_INC_CACHE_R2_BUCKET", "bucket_name": "lbloom-opennext-cache" }
+		{ "binding": "NEXT_INC_CACHE_R2_BUCKET", "bucket_name": "lbloom-garden-center-opennext-cache" }
 	],
 	"d1_databases": [
 		{
 			"binding": "NEXT_TAG_CACHE_D1",
-			"database_name": "lbloom-opennext-tags",
+			"database_name": "lbloom-garden-center-opennext-tags",
 			"database_id": "00000000-0000-0000-0000-000000000000"
 		}
 	],
